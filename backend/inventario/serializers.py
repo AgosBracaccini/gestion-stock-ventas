@@ -71,3 +71,62 @@ class MovimientoStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovimientoStock
         fields = "__all__"
+    
+
+class IngresoStockSerializer(serializers.Serializer):
+    variante_id = serializers.IntegerField()
+
+    cantidad = serializers.IntegerField(
+        min_value=1
+    )
+
+    observacion = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default=""
+    )
+    
+class IngresoMercaderiaSerializer(serializers.Serializer):
+    codigo = serializers.CharField(
+        max_length=20
+    )
+
+    prenda = serializers.CharField(
+        max_length=100
+    )
+
+    modelo = serializers.CharField(
+        max_length=100
+    )
+
+    descripcion = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default=""
+    )
+
+    color = serializers.CharField(
+        max_length=50
+    )
+
+    talle = serializers.CharField(
+        max_length=20
+    )
+
+    cantidad = serializers.IntegerField(
+        min_value=1
+    )
+
+    costo = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+
+    costo_extra = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        default=0
+    )
+
+    proveedor_id = serializers.IntegerField()

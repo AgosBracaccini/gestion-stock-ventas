@@ -103,6 +103,13 @@ Actualmente se encuentran implementadas:
 - API REST para inventario y ventas;
 - documentación interactiva de la API mediante Swagger;
 - administración mediante Django Admin.
+- ingreso y reposición de mercadería;
+- creación automática de variantes de producto;
+- búsqueda de productos y variantes;
+- filtros por proveedor, estado, color y talle;
+- consulta de variantes con stock bajo o sin stock;
+- pruebas automatizadas de reglas de negocio;
+- validación mediante tests del rollback transaccional en ventas.
 
 ## Reglas de negocio principales
 
