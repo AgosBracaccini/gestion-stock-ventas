@@ -74,16 +74,6 @@ def ingresar_mercaderia(
         },
     )
 
-    if not producto_creado:
-        producto.prenda = prenda
-        producto.modelo = modelo
-        producto.descripcion = descripcion
-        producto.costo = costo
-        producto.costo_extra = costo_extra
-        producto.proveedor = proveedor
-        producto.activo = True
-        producto.save()
-
     variante, variante_creada = VarianteProducto.objects.get_or_create(
         producto=producto,
         color=color,
