@@ -25,6 +25,12 @@ class VentaViewSet(viewsets.ReadOnlyModelViewSet):
         request=CrearVentaSerializer,
         responses={
             201: VentaSerializer,
+            400: {
+                "description": "Datos inválidos o error de negocio."
+            },
+            401: {
+                "description": "Usuario no autenticado o token inválido."
+            },
         },
     )
     

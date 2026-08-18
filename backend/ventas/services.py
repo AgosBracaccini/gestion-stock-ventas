@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 
 from inventario.models import VarianteProducto, MovimientoStock
 from .models import Venta, DetalleVenta
@@ -29,6 +29,16 @@ def realizar_venta(medio_pago, items):
         raise ValidationError(
             "La venta debe contener al menos un producto."
         )
+    
+    variantes_ids = [
+        item["variante_id"]
+        for item in items
+    ]
+
+    if len(variantes_ids) != len(set(variantes_ids)):
+        raise ValidationError(
+            "Una misma variante no puede aparecer más de una vez en la venta."
+        )
         
     medios_validos = {
         opcion[0] for opcion in Venta.MEDIOS_PAGO
@@ -53,13 +63,23 @@ def realizar_venta(medio_pago, items):
             raise ValidationError(
                 "La cantidad debe ser mayor a cero."
             )
-
-        variante = (
-            VarianteProducto.objects
-            .select_for_update()
-            .select_related("producto")
-            .get(id=variante_id)
-        )
+            
+        try:
+            variante = (
+                VarianteProducto.objects
+                .select_for_update()
+                .select_related("producto")
+                .get(id=variante_id)
+            )
+        except VarianteProducto.DoesNotExist:
+            raise ValidationError(
+                f"La variante con id {variante_id} no existe."
+            )   
+            
+        if not variante.producto.activo:
+            raise ValidationError(
+                f"El producto {variante.producto.codigo} se encuentra inactivo."
+            )
 
         if variante.stock_actual < cantidad:
             raise ValidationError(

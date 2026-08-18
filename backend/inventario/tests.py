@@ -1,14 +1,15 @@
 from django.test import TestCase
-
 from .models import (
     Proveedor,
     Producto,
     VarianteProducto,
     MovimientoStock,
 )
-
 from .services import ingresar_stock
+from django.contrib.auth.models import User
 
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 class IngresoStockTest(TestCase):
 
@@ -71,4 +72,48 @@ class IngresoStockTest(TestCase):
         self.assertEqual(
             movimiento.variante_producto,
             self.variante
+        )
+        
+        
+class AutenticacionAPITest(APITestCase):
+
+    def setUp(self):
+        self.usuario = User.objects.create_user(
+            username="usuario_test",
+            password="password_test_123"
+        )
+
+    def test_productos_requiere_autenticacion(self):
+        response = self.client.get(
+            "/api/productos/"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_usuario_autenticado_puede_acceder_productos(self):
+        token_response = self.client.post(
+            "/api/token/",
+            {
+                "username": "usuario_test",
+                "password": "password_test_123",
+            },
+            format="json",
+        )
+
+        access_token = token_response.data["access"]
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {access_token}"
+        )
+
+        response = self.client.get(
+            "/api/productos/"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
         )

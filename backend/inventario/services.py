@@ -1,6 +1,6 @@
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from django.db import transaction
-from rest_framework import filters
+
 from .models import (
     Producto,
     VarianteProducto,
@@ -24,7 +24,7 @@ def ingresar_stock(variante_id, cantidad, observacion=""):
         )
     except VarianteProducto.DoesNotExist:
         raise ValidationError(
-            "La variante indicada no existe."
+            f"La variante con id {variante_id} no existe."
         )
 
     variante.stock_actual += cantidad

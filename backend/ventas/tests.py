@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from django.test import TestCase
 
 from inventario.models import (
@@ -180,5 +180,78 @@ class VentaServiceTest(TestCase):
 
         self.assertEqual(
             MovimientoStock.objects.count(),
+            0
+        )
+    def test_no_permite_vender_producto_inactivo(self):
+        self.producto.activo = False
+        self.producto.save(
+            update_fields=["activo"]
+        )
+
+        with self.assertRaises(ValidationError):
+            realizar_venta(
+                medio_pago="EFECTIVO",
+                items=[
+                    {
+                        "variante_id": self.variante.id,
+                        "cantidad": 1,
+                    }
+                ],
+            )
+
+        self.variante.refresh_from_db()
+
+        self.assertEqual(
+            self.variante.stock_actual,
+            5
+        )
+
+        self.assertEqual(
+            Venta.objects.count(),
+            0
+        )
+        
+    def test_no_permite_variante_inexistente(self):
+        with self.assertRaises(ValidationError):
+            realizar_venta(
+                medio_pago="EFECTIVO",
+                items=[
+                    {
+                        "variante_id": 999999,
+                        "cantidad": 1,
+                    }
+                ],
+            )
+
+        self.assertEqual(
+            Venta.objects.count(),
+            0
+        )
+        
+    def test_no_permite_variante_duplicada(self):
+        with self.assertRaises(ValidationError):
+            realizar_venta(
+                medio_pago="EFECTIVO",
+                items=[
+                    {
+                        "variante_id": self.variante.id,
+                        "cantidad": 1,
+                    },
+                    {
+                        "variante_id": self.variante.id,
+                        "cantidad": 2,
+                    },
+                ],
+            )
+
+        self.variante.refresh_from_db()
+
+        self.assertEqual(
+            self.variante.stock_actual,
+            5
+        )
+
+        self.assertEqual(
+            Venta.objects.count(),
             0
         )

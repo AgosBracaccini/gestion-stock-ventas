@@ -221,9 +221,6 @@ En la carpeta [`docs`](docs/) se encuentra documentación relacionada con:
 
 ### Próximas mejoras
 
-- gestión de ingreso de mercadería;
-- búsqueda y filtrado de productos;
-- pruebas automatizadas;
 - mejoras en validaciones y manejo de errores;
 - dashboards e indicadores;
 - desarrollo del frontend en React;
