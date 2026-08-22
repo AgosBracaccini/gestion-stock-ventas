@@ -7,14 +7,32 @@ from .models import (
     MovimientoStock,
 )
 
-
 class ProveedorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proveedor
         fields = "__all__"
 
+class VarianteProductoNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VarianteProducto
+        fields = [
+            "id",
+            "producto",
+            "color",
+            "talle",
+            "stock_actual",
+        ]
 
 class ProductoSerializer(serializers.ModelSerializer):
+    proveedor_nombre = serializers.CharField(
+        source="proveedor.nombre",
+        read_only=True,
+    )
+
+    variantes = VarianteProductoNestedSerializer(
+        many=True,
+        read_only=True,
+    )
     precio_tarjeta = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -46,6 +64,7 @@ class ProductoSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "proveedor",
+            "proveedor_nombre",
             "codigo",
             "prenda",
             "modelo",
@@ -53,6 +72,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             "costo",
             "costo_extra",
             "activo",
+            "variantes",
             "precio_tarjeta",
             "precio_debito",
             "precio_efectivo",

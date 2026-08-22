@@ -1,12 +1,10 @@
 from decimal import Decimal
-
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
-
 from inventario.models import VarianteProducto, MovimientoStock
 from .models import Venta, DetalleVenta
-
-
+from django.db.models import Sum
+from django.utils import timezone
 def obtener_precio(producto, medio_pago):
     precios = {
         "EFECTIVO": producto.precio_efectivo,
@@ -118,3 +116,43 @@ def realizar_venta(medio_pago, items):
     venta.save(update_fields=["total"])
 
     return venta
+
+def obtener_resumen_dashboard():
+    hoy = timezone.localdate()
+
+    ventas_hoy = Venta.objects.filter(
+        fecha__date=hoy
+    )
+
+    ventas_mes = Venta.objects.filter(
+        fecha__year=hoy.year,
+        fecha__month=hoy.month,
+    )
+
+    total_hoy = (
+        ventas_hoy.aggregate(total=Sum("total"))["total"]
+        or Decimal("0.00")
+    )
+
+    total_mes = (
+        ventas_mes.aggregate(total=Sum("total"))["total"]
+        or Decimal("0.00")
+    )
+
+    stock_bajo = VarianteProducto.objects.filter(
+        stock_actual__gt=0,
+        stock_actual__lte=3,
+    ).count()
+
+    sin_stock = VarianteProducto.objects.filter(
+        stock_actual=0
+    ).count()
+
+    return {
+        "ventas_hoy": ventas_hoy.count(),
+        "total_hoy": str(total_hoy),
+        "ventas_mes": ventas_mes.count(),
+        "total_mes": str(total_mes),
+        "stock_bajo": stock_bajo,
+        "sin_stock": sin_stock,
+    }

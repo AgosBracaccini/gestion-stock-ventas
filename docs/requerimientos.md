@@ -22,8 +22,10 @@ La primera versión del sistema contempla la gestión de:
 - Cálculo automático de precios
 - Búsqueda y filtrado de productos y variantes
 - Autenticación de usuarios
+- Interfaz web para la operación del sistema
+- Dashboard con información de ventas e inventario
 
-En versiones posteriores podrán incorporarse dashboards, reportes, indicadores comerciales, roles específicos y configuraciones avanzadas.
+En versiones posteriores podrán incorporarse reportes avanzados, indicadores comerciales adicionales, roles específicos, exportación de información y configuraciones avanzadas.
 
 ---
 
@@ -205,7 +207,7 @@ El sistema deberá permitir además consultar variantes con bajo stock o sin sto
 
 ## RF-12 - Autenticación
 
-El sistema deberá requerir autenticación para acceder a los principales recursos de la API.
+El sistema deberá requerir autenticación para acceder a los principales recursos de la API y a las pantallas internas de gestión.
 
 La autenticación se realizará mediante JWT.
 
@@ -215,7 +217,69 @@ El sistema deberá permitir:
 - obtener un access token;
 - obtener un refresh token;
 - renovar el access token utilizando el refresh token;
+- cerrar la sesión;
+- mantener la sesión mientras las credenciales sean válidas;
 - rechazar solicitudes a recursos protegidos cuando no exista una autenticación válida.
+
+---
+
+## RF-13 - Dashboard
+
+El sistema deberá disponer de un dashboard que permita visualizar un resumen de la actividad comercial y del estado del inventario.
+
+El dashboard deberá mostrar al menos:
+
+- cantidad de ventas realizadas durante el día;
+- importe total vendido durante el día;
+- cantidad de ventas realizadas durante el mes;
+- importe total vendido durante el mes;
+- cantidad de variantes con stock bajo;
+- cantidad de variantes sin stock.
+
+La información deberá obtenerse a partir de los datos reales registrados en el sistema.
+
+El frontend no deberá utilizar valores simulados para representar estas métricas durante la operación normal del sistema.
+
+---
+
+## RF-14 - Interfaz web
+
+El sistema deberá disponer de una interfaz web que permita operar las principales funcionalidades mediante un navegador.
+
+La interfaz deberá permitir acceder a:
+
+- inicio de sesión;
+- dashboard;
+- productos y stock;
+- ingreso y reposición de mercadería;
+- registro de nuevas ventas;
+- historial de ventas;
+- movimientos de stock;
+- proveedores.
+
+Las operaciones realizadas desde el frontend deberán comunicarse con el backend mediante la API REST.
+
+La interfaz deberá reflejar los resultados de las operaciones realizadas sobre la información persistida en el backend.
+
+---
+
+## RF-15 - Protección de rutas
+
+Las pantallas internas de gestión deberán requerir una sesión autenticada.
+
+Un usuario sin una sesión válida no deberá poder acceder a las funcionalidades protegidas del sistema.
+
+Cuando la sesión deje de ser válida, el sistema deberá impedir el acceso a los recursos protegidos y solicitar nuevamente la autenticación cuando corresponda.
+
+---
+
+## RF-16 - Historial de ventas
+
+El sistema deberá permitir consultar las ventas registradas.
+
+Para cada venta deberá ser posible visualizar la información general de la operación y los artículos que la componen.
+
+La consulta deberá conservar los valores históricos registrados al momento de realizar la venta.
 
 ---
 
@@ -280,16 +344,51 @@ Durante el desarrollo local se contemplará la ejecución independiente del fron
 
 ---
 
+## RNF-08 - Separación entre frontend y backend
+
+El frontend y el backend deberán mantenerse desacoplados.
+
+La comunicación entre ambos se realizará mediante HTTP utilizando la API REST.
+
+El frontend será responsable de la presentación de la información, navegación e interacción con el usuario.
+
+Las reglas críticas de negocio, validaciones, cálculos y operaciones sobre el inventario deberán permanecer en el backend.
+
+---
+
+## RNF-09 - Manejo de errores
+
+La aplicación deberá informar de manera comprensible los errores producidos durante las operaciones realizadas por el usuario.
+
+El backend deberá responder utilizando códigos HTTP adecuados y el frontend deberá interpretar dichas respuestas para informar el resultado de la operación.
+
+---
+
+## RNF-10 - Configuración
+
+Las configuraciones dependientes del entorno deberán mantenerse separadas del código fuente cuando corresponda.
+
+La dirección de la API utilizada por el frontend deberá poder configurarse mediante variables de entorno.
+
+---
+
+## RNF-11 - Build del frontend
+
+El frontend deberá permitir generar correctamente una versión de producción mediante su proceso de build.
+
+La existencia de errores de compilación deberá impedir considerar válida una versión para despliegue.
+
+---
+
 # Requerimientos futuros
 
-Fuera del alcance de Backend V1 se consideran posibles mejoras:
+Fuera del alcance de la primera versión se consideran posibles mejoras:
 
-- dashboard de ventas e inventario;
-- indicadores diarios, semanales y mensuales;
+- indicadores semanales y comparativos;
 - productos más vendidos;
 - talles y colores más vendidos;
 - análisis de costos y márgenes;
-- reportes;
+- reportes avanzados;
 - exportación de información;
 - stock mínimo configurable;
 - configuración dinámica de reglas de precios;

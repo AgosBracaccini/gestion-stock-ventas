@@ -69,8 +69,9 @@ class ProductoViewSet(viewsets.ModelViewSet):
 
 class VarianteProductoViewSet(viewsets.ModelViewSet):
     queryset = (
-        VarianteProducto.objects
-        .select_related("producto")
+        Producto.objects
+        .select_related("proveedor")
+        .prefetch_related("variantes")
         .all()
     )
 

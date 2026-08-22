@@ -1,4 +1,5 @@
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
@@ -8,6 +9,10 @@ from .serializers import (
     VentaSerializer,
 )
 
+from .services import (
+    realizar_venta,
+    obtener_resumen_dashboard,
+)
 
 class VentaViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
@@ -50,4 +55,17 @@ class VentaViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             respuesta.data,
             status=status.HTTP_201_CREATED
+        )
+        
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="resumen",
+    )
+    def resumen(self, request):
+        data = obtener_resumen_dashboard()
+
+        return Response(
+            data,
+            status=status.HTTP_200_OK,
         )

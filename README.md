@@ -50,33 +50,45 @@ Al confirmar una venta, el sistema valida la disponibilidad, calcula los importe
 
 ### Frontend
 
-El frontend se incorporará en la siguiente etapa del proyecto utilizando React.
+- React
+- TypeScript
+- Vite
+- React Router
+- TanStack React Query
+- Tailwind CSS
+- Componentes UI reutilizables
 
-## Arquitectura del backend
+## Arquitectura
 
-El backend separa las diferentes responsabilidades de la aplicación:
+La aplicación se encuentra separada en frontend y backend.
 
 ```text
-Cliente / Frontend
-       ↓
-    API REST
-       ↓
-Autenticación JWT
-       ↓
-     Views
-       ↓
-  Serializers
-       ↓
-    Services
-       ↓
-     Models
-       ↓
-  PostgreSQL
+Usuario
+   ↓
+React + Vite
+   ↓
+Cliente HTTP / JWT
+   ↓
+API REST
+   ↓
+Django REST Framework
+   ↓
+Services
+   ↓
+Models
+   ↓
+PostgreSQL
 ```
+
+El frontend se encarga de la interfaz de usuario, la navegación, la gestión de la sesión y el consumo de la API REST.
+
+El backend concentra las reglas de negocio, validaciones, cálculos, operaciones transaccionales y persistencia de datos.
 
 Los `services` contienen las operaciones de negocio que involucran múltiples acciones, como el registro de una venta, el ingreso de mercadería y las actualizaciones correspondientes del inventario.
 
 Las operaciones críticas se ejecutan mediante transacciones para evitar modificaciones parciales de la información ante un error.
+
+Las reglas críticas de negocio permanecen en el backend y no se duplican en el frontend.
 
 ## Modelo de datos
 
@@ -97,33 +109,87 @@ La entidad `MovimientoStock` conserva el historial de las modificaciones del inv
 
 ## Funcionalidades implementadas
 
-Actualmente se encuentran implementadas:
+### Autenticación
 
-- gestión de proveedores;
-- gestión de productos;
-- gestión de variantes por color y talle;
-- cálculo automático de precios según medio de pago;
-- ingreso y reposición de mercadería;
-- creación automática de variantes durante el ingreso de mercadería;
-- reposición de stock sin sobrescribir los datos existentes del producto;
-- registro de ventas con múltiples artículos;
-- validación de stock disponible;
-- actualización automática del stock al realizar una venta;
-- generación automática de movimientos de stock;
-- transacciones atómicas para evitar operaciones parcialmente procesadas;
-- búsqueda de productos y variantes;
-- filtros por proveedor, estado, color y talle;
-- consulta de variantes con stock bajo o sin stock;
-- autenticación mediante JWT;
-- generación de access token y refresh token;
-- protección de los endpoints mediante autenticación;
-- manejo de errores de negocio mediante respuestas HTTP apropiadas;
-- API REST para inventario y ventas;
-- documentación interactiva mediante Swagger/OpenAPI;
-- configuración CORS para la integración con el frontend;
-- administración mediante Django Admin;
-- pruebas automatizadas de reglas de negocio, inventario, ventas, precios y autenticación;
-- validación mediante tests del rollback transaccional.
+- Inicio de sesión mediante JWT.
+- Access token y refresh token.
+- Renovación automática de sesión.
+- Rutas protegidas.
+- Cierre de sesión.
+- Manejo de sesión expirada.
+
+### Productos e inventario
+
+- Gestión de proveedores.
+- Gestión de productos.
+- Variantes por color y talle.
+- Código único por producto.
+- Combinación única producto + color + talle.
+- Consulta de stock actual.
+- Búsqueda de productos y variantes.
+- Filtros por proveedor, estado, color y talle.
+- Identificación de variantes con stock bajo o sin stock.
+
+### Ingreso de mercadería
+
+El sistema contempla tres escenarios:
+
+1. Producto nuevo + variante nueva.
+2. Producto existente + variante nueva.
+3. Producto existente + variante existente.
+
+En una reposición de una variante existente se incrementa el stock sin crear registros duplicados.
+
+Los datos generales de un producto existente no se modifican automáticamente durante una reposición.
+
+Cada ingreso genera un movimiento de stock de tipo `ENTRADA`.
+
+### Ventas
+
+- Registro de ventas con uno o múltiples artículos.
+- Selección de variantes por color y talle.
+- Consulta de stock disponible.
+- Selección del medio de pago.
+- Visualización del precio correspondiente al medio de pago.
+- Cálculo automático de subtotales y total.
+- Validación de stock.
+- Rechazo de cantidades inválidas.
+- Rechazo de productos inactivos.
+- Rechazo de variantes inexistentes.
+- Rechazo de variantes repetidas dentro de una venta.
+- Descuento automático del stock.
+- Generación automática de movimientos `VENTA`.
+- Operaciones transaccionales con rollback ante errores.
+
+### Medios de pago
+
+- Efectivo.
+- Transferencia.
+- Tarjeta de débito.
+- Tarjeta de crédito.
+- Fast Cred.
+- Finan Ya.
+
+### Consultas e historial
+
+- Historial de ventas.
+- Detalle de artículos de cada venta.
+- Historial de movimientos de stock.
+- Dashboard con importe vendido durante el día.
+- Dashboard con importe vendido durante el mes.
+- Cantidad de operaciones del día y del mes.
+- Indicadores de stock bajo y sin stock.
+
+### API y calidad
+
+- API REST desarrollada con Django REST Framework.
+- Persistencia mediante PostgreSQL.
+- Documentación OpenAPI / Swagger.
+- CORS configurado para la comunicación con el frontend.
+- Manejo de errores HTTP.
+- Pruebas automatizadas del backend.
+- Validación del rollback transaccional.
+- Build de producción del frontend verificado.
 
 ## Reglas de negocio principales
 
@@ -182,6 +248,8 @@ Cuando el access token expira puede obtenerse uno nuevo mediante:
 POST /api/token/refresh/
 ```
 
+El frontend administra la sesión y realiza la renovación automática del access token cuando corresponde.
+
 Los endpoints principales de inventario y ventas requieren autenticación.
 
 ## Documentación de la API
@@ -189,20 +257,20 @@ Los endpoints principales de inventario y ventas requieren autenticación.
 Durante el desarrollo, Swagger se encuentra disponible en:
 
 ```text
-/api/docs/
+http://127.0.0.1:8000/api/docs/
 ```
 
 El esquema OpenAPI se encuentra disponible en:
 
 ```text
-/api/schema/
+http://127.0.0.1:8000/api/schema/
 ```
 
 Swagger permite explorar y probar los endpoints de la API, incluyendo aquellos protegidos mediante JWT.
 
 ## Pruebas automatizadas
 
-El backend cuenta actualmente con 20 pruebas automatizadas.
+El backend cuenta con pruebas automatizadas para las principales reglas de negocio.
 
 Entre los comportamientos comprobados se encuentran:
 
@@ -250,7 +318,7 @@ git clone https://github.com/AgosBracaccini/gestion-stock-ventas
 cd gestion-stock-ventas
 ```
 
-### 2. Crear y activar un entorno virtual
+### 2. Crear y activar el entorno virtual del backend
 
 Windows:
 
@@ -259,13 +327,13 @@ python -m venv venv
 venv\Scripts\activate
 ```
 
-### 3. Instalar las dependencias
+### 3. Instalar las dependencias del backend
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configurar las variables de entorno
+### 4. Configurar las variables de entorno del backend
 
 Crear un archivo `.env` en la raíz tomando como referencia `.env.example`.
 
@@ -294,16 +362,93 @@ python manage.py createsuperuser
 
 Este usuario puede utilizarse para acceder a Django Admin y autenticarse inicialmente contra la API.
 
-### 7. Ejecutar el servidor
+### 7. Ejecutar el backend
+
+Desde la carpeta `backend`:
 
 ```bash
 python manage.py runserver
 ```
 
-El backend estará disponible por defecto en:
+El backend estará disponible en:
 
 ```text
 http://127.0.0.1:8000/
+```
+
+### 8. Instalar las dependencias del frontend
+
+Abrir una segunda terminal y ubicarse en la carpeta `frontend`:
+
+```bash
+cd frontend
+npm install
+```
+
+### 9. Configurar las variables de entorno del frontend
+
+Crear un archivo `.env` dentro de `frontend`:
+
+```env
+VITE_API_URL=http://127.0.0.1:8000
+VITE_USE_MOCKS=false
+```
+
+### 10. Ejecutar el frontend
+
+Desde la carpeta `frontend`:
+
+```bash
+npm run dev
+```
+
+El frontend estará disponible en:
+
+```text
+http://localhost:5173/
+```
+
+Para utilizar el sistema durante el desarrollo deben permanecer ejecutándose simultáneamente el backend y el frontend.
+
+## Build del frontend
+
+Para verificar o generar el build de producción:
+
+```bash
+cd frontend
+npm run build
+```
+
+## Estructura general
+
+```text
+gestion-stock-ventas/
+│
+├── backend/
+│   ├── config/
+│   ├── inventario/
+│   ├── ventas/
+│   └── manage.py
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── auth/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   └── package.json
+│
+├── docs/
+│   ├── images/
+│   ├── as-is.md
+│   ├── modelo-datos.md
+│   └── requerimientos.md
+│
+├── .env.example
+├── requirements.txt
+└── README.md
 ```
 
 ## Documentación adicional
@@ -311,29 +456,54 @@ http://127.0.0.1:8000/
 En la carpeta [`docs`](docs/) se encuentra documentación relacionada con:
 
 - análisis de la situación inicial (AS-IS);
-- requerimientos;
+- requerimientos del sistema;
 - modelo de datos;
-- decisiones de diseño.
+- decisiones de diseño;
+- arquitectura e integración del sistema.
 
 ## Estado del proyecto
 
-### Backend V1
+### V1 funcional
 
-La primera versión funcional del backend se encuentra implementada.
+La primera versión funcional del sistema se encuentra implementada e integrada.
 
-Incluye gestión de inventario y ventas, reglas de negocio, autenticación JWT, persistencia en PostgreSQL, documentación de la API y pruebas automatizadas.
+Actualmente funcionan de manera conjunta:
 
-### Próxima etapa
+```text
+React + Vite
+      ↓
+API REST
+      ↓
+Django REST Framework
+      ↓
+PostgreSQL
+```
 
-Desarrollo del frontend en React e integración con la API REST.
+Se encuentran implementados y probados los principales flujos del sistema:
 
-Entre las mejoras posteriores previstas se encuentran:
+- autenticación;
+- consulta de productos y stock;
+- ingreso de productos nuevos;
+- creación de nuevas variantes;
+- reposición de stock;
+- registro de ventas;
+- cálculo de precios según medio de pago;
+- actualización automática del inventario;
+- generación y consulta de movimientos de stock;
+- historial de ventas;
+- dashboard con información real.
 
-- dashboards e indicadores;
+### Próximas mejoras
+
+La V1 funcional constituye la base del sistema. Se prevé incorporar funcionalidades adicionales y mejoras antes de considerar cerrado el desarrollo del proyecto.
+
+Entre las posibles extensiones se encuentran:
+
+- reportes e indicadores avanzados;
+- exportación de información;
 - roles y permisos específicos;
 - stock mínimo configurable;
-- parametrización de las reglas de precios;
-- reportes y exportación de información;
+- parametrización de reglas de precios;
 - despliegue de la aplicación.
 
 ## Autor

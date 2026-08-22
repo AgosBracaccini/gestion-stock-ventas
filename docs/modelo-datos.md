@@ -35,7 +35,7 @@ Relación:
 Proveedor 1:N Producto
 ```
 
-La información del proveedor se mantiene separada de Producto para evitar repetir sus datos en cada artículo asociado.
+La información del proveedor se mantiene separada de `Producto` para evitar repetir sus datos en cada artículo asociado.
 
 ---
 
@@ -68,6 +68,7 @@ Relaciones:
 
 ```text
 Proveedor 1:N Producto
+
 Producto 1:N VarianteProducto
 ```
 
@@ -339,3 +340,66 @@ Una variante asociada a movimientos de stock o ventas no debe eliminarse si esto
 Los productos incluyen además un estado activo/inactivo para permitir retirar productos de la operatoria sin necesidad de eliminar su información histórica.
 
 Un producto inactivo conserva sus datos y relaciones históricas, pero no puede utilizarse para registrar nuevas ventas.
+
+---
+
+## Relación con el frontend
+
+El modelo de datos pertenece al backend y constituye la fuente de verdad del sistema.
+
+El frontend desarrollado con React no mantiene una base de datos independiente ni modifica directamente la persistencia.
+
+La información visualizada en la interfaz se obtiene mediante la API REST y las operaciones realizadas desde el frontend se envían al backend para su validación y procesamiento.
+
+La arquitectura mantiene el siguiente flujo:
+
+```text
+React
+  ↓
+API REST
+  ↓
+Django REST Framework
+  ↓
+Models
+  ↓
+PostgreSQL
+```
+
+De esta forma:
+
+- PostgreSQL conserva la información persistente;
+- Django aplica las reglas de negocio y validaciones;
+- React se encarga de la interacción con el usuario y la presentación de los datos.
+
+Esta separación evita mantener estados persistentes duplicados entre frontend y backend y permite conservar una única fuente de verdad para la información del sistema.
+
+---
+
+## Datos derivados para el dashboard
+
+Las métricas mostradas en el dashboard no requieren entidades adicionales dentro del modelo.
+
+Valores como:
+
+- ventas realizadas durante el día;
+- total vendido durante el día;
+- ventas realizadas durante el mes;
+- total vendido durante el mes;
+- variantes con stock bajo;
+- variantes sin stock;
+
+se obtienen mediante consultas sobre las entidades existentes.
+
+Por ejemplo:
+
+```text
+Venta
+  ↓
+Cantidad y totales por fecha
+
+VarianteProducto
+  ↓
+Stock bajo / sin stock
+```
+
+Esta decisión evita almacenar información redundante que puede calcularse a partir de los datos persistidos.
