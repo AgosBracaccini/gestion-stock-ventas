@@ -9,6 +9,7 @@ from .models import (
     Producto,
     VarianteProducto,
     MovimientoStock,
+    ConfiguracionPrecios,
 )
 
 from .serializers import (
@@ -18,6 +19,7 @@ from .serializers import (
     MovimientoStockSerializer,
     IngresoStockSerializer,
     IngresoMercaderiaSerializer,
+    ConfiguracionPreciosSerializer,
 )
 
 from .services import (
@@ -223,3 +225,48 @@ class MovimientoStockViewSet(viewsets.ReadOnlyModelViewSet):
     )
 
     serializer_class = MovimientoStockSerializer
+    
+class ConfiguracionPreciosViewSet(
+    viewsets.ViewSet
+):
+    def list(self, request):
+        configuracion = (
+            ConfiguracionPrecios.obtener()
+        )
+
+        serializer = (
+            ConfiguracionPreciosSerializer(
+                configuracion
+            )
+        )
+
+        return Response(
+            serializer.data
+        )
+
+    def partial_update(
+        self,
+        request,
+        pk=None,
+    ):
+        configuracion = (
+            ConfiguracionPrecios.obtener()
+        )
+
+        serializer = (
+            ConfiguracionPreciosSerializer(
+                configuracion,
+                data=request.data,
+                partial=True,
+            )
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        serializer.save()
+
+        return Response(
+            serializer.data
+        )

@@ -69,3 +69,36 @@ class VentaViewSet(viewsets.ReadOnlyModelViewSet):
             data,
             status=status.HTTP_200_OK,
         )
+    
+    @action(
+        detail=True,
+        methods=["patch"],
+        url_path="verificar-transferencia",
+    )
+    def verificar_transferencia(self, request, pk=None):
+        venta = self.get_object()
+
+        if venta.medio_pago != "TRANSFERENCIA":
+            return Response(
+                {
+                    "detail": (
+                        "Esta venta no corresponde "
+                        "a una transferencia."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        venta.transferencia_verificada = True
+        venta.save(
+            update_fields=[
+                "transferencia_verificada"
+            ]
+        )
+
+        serializer = VentaSerializer(venta)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )

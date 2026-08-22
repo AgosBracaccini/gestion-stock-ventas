@@ -14,6 +14,7 @@ export const ENDPOINTS = {
   ingresoMercaderia: "/api/variantes/ingresar-mercaderia/",
   movimientos: "/api/movimientos-stock/",
   proveedores: "/api/proveedores/",
+  configuracionPrecios: "/api/configuracion-precios/",
 } as const;
 
 export const STOCK_BAJO_UMBRAL = 3;

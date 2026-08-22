@@ -100,12 +100,15 @@ El sistema utiliza las siguientes entidades principales:
 - MovimientoStock
 - Venta
 - DetalleVenta
+- ConfiguracionPrecios
 
 ![Diagrama Entidad-Relación](docs/images/diagrama-er.png)
 
 La separación entre `Producto` y `VarianteProducto` permite representar diferentes combinaciones de color y talle manteniendo un único código general de producto.
 
 La entidad `MovimientoStock` conserva el historial de las modificaciones del inventario, mientras que `stock_actual` permite consultar rápidamente la disponibilidad de cada variante.
+
+La entidad `ConfiguracionPrecios` centraliza los parámetros utilizados para calcular los precios correspondientes a los distintos medios de pago. Esto permite modificar las reglas comerciales desde el sistema sin necesidad de alterar el código fuente.
 
 ## Funcionalidades implementadas
 
@@ -160,8 +163,14 @@ Cada ingreso genera un movimiento de stock de tipo `ENTRADA`.
 - Descuento automático del stock.
 - Generación automática de movimientos `VENTA`.
 - Operaciones transaccionales con rollback ante errores.
+- Registro de nombre, apellido y teléfono del cliente en ventas realizadas mediante transferencia.
+- Estado de verificación para transferencias.
+- Posibilidad de marcar posteriormente una transferencia como verificada.
+- Conservación de los datos necesarios para contactar al cliente ante inconvenientes con la acreditación del pago.
 
 ### Medios de pago
+
+El sistema contempla los siguientes medios de pago:
 
 - Efectivo.
 - Transferencia.
@@ -169,6 +178,20 @@ Cada ingreso genera un movimiento de stock de tipo `ENTRADA`.
 - Tarjeta de crédito.
 - Fast Cred.
 - Finan Ya.
+
+El precio de cada artículo se actualiza automáticamente en la interfaz de acuerdo con el medio de pago seleccionado.
+
+Para las ventas mediante **Fast Cred** y **Finan Ya**, el sistema permite acceder a la plataforma externa correspondiente antes de confirmar la operación. Una vez procesado el pago externamente, el usuario confirma su realización y puede completar el registro de la venta.
+
+En las ventas mediante **transferencia**, el sistema solicita:
+
+- nombre del cliente;
+- apellido del cliente;
+- teléfono.
+
+Estos datos permiten realizar posteriormente la verificación de la acreditación del pago y disponer de información de contacto ante cualquier inconveniente.
+
+Las transferencias se registran inicialmente como pendientes de verificación y pueden marcarse posteriormente como verificadas desde el historial de ventas.
 
 ### Consultas e historial
 
@@ -179,6 +202,9 @@ Cada ingreso genera un movimiento de stock de tipo `ENTRADA`.
 - Dashboard con importe vendido durante el mes.
 - Cantidad de operaciones del día y del mes.
 - Indicadores de stock bajo y sin stock.
+- Consulta de los datos asociados a ventas por transferencia.
+- Visualización del estado pendiente/verificado de las transferencias.
+- Verificación posterior de pagos realizados mediante transferencia.
 
 ### API y calidad
 
@@ -208,9 +234,9 @@ Cada ingreso genera un movimiento de stock de tipo `ENTRADA`.
 - Los productos pueden desactivarse sin eliminar su información histórica.
 - Los endpoints protegidos requieren un usuario autenticado.
 
-## Cálculo de precios
+## Cálculo y configuración de precios
 
-Las reglas utilizadas actualmente fueron obtenidas a partir del análisis del proceso existente:
+Las reglas utilizadas inicialmente fueron obtenidas a partir del análisis del proceso existente:
 
 ```text
 Precio tarjeta = (Costo × 2,5) + Costo extra
@@ -219,12 +245,6 @@ Precio efectivo / transferencia = Precio tarjeta - 20 %
 Precio Fast Cred = Precio efectivo
 Precio Finan Ya = Precio efectivo + 5 %
 ```
-
-El costo y el costo extra pertenecen a cada producto y pueden variar entre productos.
-
-Las fórmulas de precios cuentan con pruebas automatizadas para verificar que los cálculos continúen respetando las reglas definidas.
-
-En futuras versiones estas reglas podrán convertirse en parámetros configurables.
 
 ## Autenticación
 
@@ -391,8 +411,8 @@ Crear un archivo `.env` dentro de `frontend`:
 
 ```env
 VITE_API_URL=http://127.0.0.1:8000
-VITE_USE_MOCKS=false
-```
+VITE_FAST_CRED_URL=https://ventapp.fastcred.ar/login
+VITE_FINAN_YA_URL=https://clientes.finanya.com.ar:9634/index.php
 
 ### 10. Ejecutar el frontend
 
@@ -444,6 +464,7 @@ gestion-stock-ventas/
 │   ├── images/
 │   ├── as-is.md
 │   ├── modelo-datos.md
+|   ├── frontend.md
 │   └── requerimientos.md
 │
 ├── .env.example
@@ -463,48 +484,21 @@ En la carpeta [`docs`](docs/) se encuentra documentación relacionada con:
 
 ## Estado del proyecto
 
-### V1 funcional
+### V1 finalizada
 
-La primera versión funcional del sistema se encuentra implementada e integrada.
+La primera versión funcional del sistema se encuentra implementada, integrada y probada.
 
-Actualmente funcionan de manera conjunta:
+La aplicación funciona mediante la siguiente arquitectura:
 
 ```text
-React + Vite
-      ↓
-API REST
-      ↓
+React + TypeScript + Vite
+        ↓
+      API REST
+        ↓
 Django REST Framework
-      ↓
-PostgreSQL
+        ↓
+    PostgreSQL
 ```
-
-Se encuentran implementados y probados los principales flujos del sistema:
-
-- autenticación;
-- consulta de productos y stock;
-- ingreso de productos nuevos;
-- creación de nuevas variantes;
-- reposición de stock;
-- registro de ventas;
-- cálculo de precios según medio de pago;
-- actualización automática del inventario;
-- generación y consulta de movimientos de stock;
-- historial de ventas;
-- dashboard con información real.
-
-### Próximas mejoras
-
-La V1 funcional constituye la base del sistema. Se prevé incorporar funcionalidades adicionales y mejoras antes de considerar cerrado el desarrollo del proyecto.
-
-Entre las posibles extensiones se encuentran:
-
-- reportes e indicadores avanzados;
-- exportación de información;
-- roles y permisos específicos;
-- stock mínimo configurable;
-- parametrización de reglas de precios;
-- despliegue de la aplicación.
 
 ## Autor
 

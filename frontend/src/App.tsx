@@ -1,17 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { AppSidebar } from "./components/layout/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { Toaster } from "./components/ui/sonner";
-
+import { ConfiguracionPreciosPage } from "./pages/ConfiguracionPreciosPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { IngresoMercaderiaPage } from "./pages/IngresoMercaderiaPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -29,9 +23,7 @@ function RutaProtegida() {
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Cargando...
-        </p>
+        <p className="text-sm text-muted-foreground">Cargando...</p>
       </div>
     );
   }
@@ -53,9 +45,7 @@ function LayoutAutenticado() {
           <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur">
             <SidebarTrigger />
 
-            <span className="font-display text-lg text-foreground md:hidden">
-              Indumentaria
-            </span>
+            <span className="font-display text-lg text-foreground md:hidden">Indumentaria</span>
           </header>
 
           <main className="flex-1 px-4 py-8 md:px-8">
@@ -79,47 +69,25 @@ export function App() {
 
             <Route element={<RutaProtegida />}>
               <Route element={<LayoutAutenticado />}>
-                <Route
-                  path="/dashboard"
-                  element={<DashboardPage />}
-                />
+                <Route path="/dashboard" element={<DashboardPage />} />
 
-                <Route
-                  path="/nueva-venta"
-                  element={<NuevaVentaPage />}
-                />
+                <Route path="/nueva-venta" element={<NuevaVentaPage />} />
 
-                <Route
-                  path="/productos"
-                  element={<ProductosPage />}
-                />
+                <Route path="/productos" element={<ProductosPage />} />
 
-                <Route
-                  path="/ingreso-mercaderia"
-                  element={<IngresoMercaderiaPage />}
-                />
+                <Route path="/ingreso-mercaderia" element={<IngresoMercaderiaPage />} />
 
-                <Route
-                  path="/ventas"
-                  element={<VentasPage />}
-                />
+                <Route path="/ventas" element={<VentasPage />} />
 
-                <Route
-                  path="/movimientos"
-                  element={<MovimientosPage />}
-                />
+                <Route path="/movimientos" element={<MovimientosPage />} />
 
-                <Route
-                  path="/proveedores"
-                  element={<ProveedoresPage />}
-                />
+                <Route path="/proveedores" element={<ProveedoresPage />} />
+                
+                <Route path="/configuracion-precios" element={<ConfiguracionPreciosPage />} />
               </Route>
             </Route>
 
-            <Route
-              path="*"
-              element={<Navigate to="/" replace />}
-            />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
 
           <Toaster />

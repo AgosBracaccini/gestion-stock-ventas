@@ -23,6 +23,28 @@ class Venta(models.Model):
         decimal_places=2,
         default=0
     )
+    
+    nombre_transferencia = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    apellido_transferencia = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    telefono_transferencia = models.CharField(
+        max_length=30,
+        blank=True,
+        default="",
+    )
+
+    transferencia_verificada = models.BooleanField(
+        default=False,
+    )
 
     def __str__(self):
         return f"Venta #{self.id} - {self.fecha}"

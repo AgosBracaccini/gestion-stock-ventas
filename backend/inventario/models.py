@@ -28,23 +28,52 @@ class Producto(models.Model):
     
     @property
     def precio_tarjeta(self):
-        return (self.costo * Decimal("2.5")) + self.costo_extra
+        config = ConfiguracionPrecios.obtener()
+
+        return (
+            self.costo * config.multiplicador_tarjeta
+        ) + self.costo_extra
+
 
     @property
     def precio_debito(self):
-        return self.precio_tarjeta * Decimal("0.85")
+        config = ConfiguracionPrecios.obtener()
+
+        porcentaje = (
+            Decimal("1.00")
+            - config.descuento_debito / Decimal("100")
+        )
+
+        return self.precio_tarjeta * porcentaje
+
 
     @property
     def precio_efectivo(self):
-        return self.precio_tarjeta * Decimal("0.80")
+        config = ConfiguracionPrecios.obtener()
 
-    @property
-    def precio_finan_ya(self):
-        return self.precio_efectivo * Decimal("1.05")
-    
+        porcentaje = (
+            Decimal("1.00")
+            - config.descuento_efectivo / Decimal("100")
+        )
+
+        return self.precio_tarjeta * porcentaje
+
+
     @property
     def precio_fast_cred(self):
         return self.precio_efectivo
+
+
+    @property
+    def precio_finan_ya(self):
+        config = ConfiguracionPrecios.obtener()
+
+        porcentaje = (
+            Decimal("1.00")
+            + config.recargo_finan_ya / Decimal("100")
+        )
+
+        return self.precio_efectivo * porcentaje
     
     def __str__(self):
         return f"{self.codigo} - {self.prenda} {self.modelo}"
@@ -102,3 +131,47 @@ class MovimientoStock(models.Model):
             f"{self.variante_producto} - "
             f"{self.cantidad}"
         )
+        
+
+class ConfiguracionPrecios(models.Model):
+    multiplicador_tarjeta = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("2.50"),
+    )
+
+    descuento_debito = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("15.00"),
+    )
+
+    descuento_efectivo = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("20.00"),
+    )
+
+    recargo_finan_ya = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("5.00"),
+    )
+
+    actualizado = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = "Configuración de precios"
+        verbose_name_plural = "Configuración de precios"
+
+    def __str__(self):
+        return "Configuración general de precios"
+
+    @classmethod
+    def obtener(cls):
+        configuracion, _ = cls.objects.get_or_create(
+            pk=1
+        )
+        return configuracion

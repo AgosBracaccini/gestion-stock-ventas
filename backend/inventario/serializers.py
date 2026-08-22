@@ -5,6 +5,7 @@ from .models import (
     Producto,
     VarianteProducto,
     MovimientoStock,
+    ConfiguracionPrecios,
 )
 
 class ProveedorSerializer(serializers.ModelSerializer):
@@ -150,3 +151,54 @@ class IngresoMercaderiaSerializer(serializers.Serializer):
     )
 
     proveedor_id = serializers.IntegerField()
+    
+class ConfiguracionPreciosSerializer(
+    serializers.ModelSerializer
+):
+    class Meta:
+        model = ConfiguracionPrecios
+        fields = [
+            "id",
+            "multiplicador_tarjeta",
+            "descuento_debito",
+            "descuento_efectivo",
+            "recargo_finan_ya",
+            "actualizado",
+        ]
+
+        read_only_fields = [
+            "id",
+            "actualizado",
+        ]
+
+    def validate_multiplicador_tarjeta(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(
+                "El multiplicador debe ser mayor a cero."
+            )
+
+        return value
+
+    def validate_descuento_debito(self, value):
+        if value < 0 or value > 100:
+            raise serializers.ValidationError(
+                "El descuento debe estar entre 0 y 100."
+            )
+
+        return value
+
+    def validate_descuento_efectivo(self, value):
+        if value < 0 or value > 100:
+            raise serializers.ValidationError(
+                "El descuento debe estar entre 0 y 100."
+            )
+
+        return value
+
+    def validate_recargo_finan_ya(self, value):
+        if value < 0:
+            raise serializers.ValidationError(
+                "El recargo no puede ser negativo."
+            )
+
+        return value

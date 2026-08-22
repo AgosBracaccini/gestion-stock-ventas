@@ -8,6 +8,7 @@ import {
   Receipt,
   ShoppingBag,
   Truck,
+  Settings,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthProvider";
@@ -32,6 +33,11 @@ const items = [
   { to: "/ventas", label: "Ventas", icon: Receipt },
   { to: "/movimientos", label: "Movimientos", icon: ArrowLeftRight },
   { to: "/proveedores", label: "Proveedores", icon: Truck },
+  {
+    label: "Configuración de precios",
+    to: "/configuracion-precios",
+    icon: Settings,
+  },
 ] as const;
 
 export function AppSidebar() {

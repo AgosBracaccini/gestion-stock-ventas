@@ -20,6 +20,10 @@ La primera versión del sistema contempla la gestión de:
 - Detalles de venta
 - Medios de pago
 - Cálculo automático de precios
+- Configuración de parámetros de precios
+- Gestión de datos asociados a transferencias
+- Verificación de pagos por transferencia
+- Acceso a plataformas externas para Fast Cred y Finan Ya
 - Búsqueda y filtrado de productos y variantes
 - Autenticación de usuarios
 - Interfaz web para la operación del sistema
@@ -137,7 +141,7 @@ Precio Finan Ya = Precio efectivo + 5 %
 
 El costo y los costos extras podrán variar entre productos.
 
-Estas reglas podrán convertirse posteriormente en parámetros configurables.
+Los parámetros generales utilizados para el cálculo de precios deberán poder administrarse mediante una configuración centralizada del sistema, permitiendo modificar las reglas comerciales sin necesidad de alterar el código fuente.
 
 ---
 
@@ -157,6 +161,16 @@ La venta deberá registrar:
 - Fecha
 - Medio de pago
 - Total
+Cuando el medio de pago sea `TRANSFERENCIA`, la venta deberá registrar además:
+
+- Nombre del cliente
+- Apellido del cliente
+- Teléfono
+- Estado de verificación de la transferencia
+
+El nombre, apellido y teléfono serán obligatorios para las ventas realizadas mediante transferencia.
+
+Las transferencias se registrarán inicialmente como pendientes de verificación.
 
 El precio aplicado deberá conservarse en el detalle de la venta para mantener el valor histórico de la operación.
 
@@ -255,7 +269,8 @@ La interfaz deberá permitir acceder a:
 - registro de nuevas ventas;
 - historial de ventas;
 - movimientos de stock;
-- proveedores.
+- proveedores;
+- configuración de precios.
 
 Las operaciones realizadas desde el frontend deberán comunicarse con el backend mediante la API REST.
 
@@ -280,6 +295,57 @@ El sistema deberá permitir consultar las ventas registradas.
 Para cada venta deberá ser posible visualizar la información general de la operación y los artículos que la componen.
 
 La consulta deberá conservar los valores históricos registrados al momento de realizar la venta.
+
+---
+
+## RF-17 - Configuración de precios
+
+El sistema deberá permitir consultar y modificar los parámetros generales utilizados para calcular los precios correspondientes a los diferentes medios de pago.
+
+La configuración deberá contemplar los parámetros utilizados para:
+
+- precio de tarjeta;
+- precio de débito;
+- precio de efectivo y transferencia;
+- precio de Fast Cred;
+- precio de Finan Ya.
+
+Los cambios realizados en la configuración deberán ser utilizados por el backend para calcular los precios de los productos.
+
+La lógica de cálculo deberá permanecer centralizada en el backend.
+
+---
+
+## RF-18 - Gestión y verificación de transferencias
+
+Cuando una venta sea realizada mediante transferencia, el sistema deberá registrar:
+
+- nombre del cliente;
+- apellido del cliente;
+- teléfono;
+- estado de verificación del pago.
+
+Toda transferencia deberá registrarse inicialmente como pendiente de verificación.
+
+El sistema deberá permitir consultar posteriormente estos datos desde el historial de ventas.
+
+El usuario deberá poder marcar una transferencia como verificada una vez comprobada la acreditación del pago.
+
+La verificación deberá modificar únicamente el estado correspondiente y no deberá alterar los importes, detalles ni movimientos de stock de la venta.
+
+---
+
+## RF-19 - Integración del flujo de Fast Cred y Finan Ya
+
+Cuando el usuario seleccione Fast Cred o Finan Ya como medio de pago, el sistema deberá permitir acceder a la plataforma externa correspondiente antes de confirmar la venta.
+
+Las direcciones de dichas plataformas deberán poder configurarse mediante variables de entorno del frontend.
+
+El acceso a la plataforma externa no deberá registrar automáticamente la venta.
+
+Una vez realizada la operación en la plataforma correspondiente, el usuario deberá confirmar en el sistema que completó dicho paso antes de registrar definitivamente la venta.
+
+El registro definitivo de la venta continuará siendo responsabilidad del backend y deberá respetar las mismas validaciones de stock e integridad transaccional aplicadas a los demás medios de pago.
 
 ---
 
@@ -370,6 +436,10 @@ Las configuraciones dependientes del entorno deberán mantenerse separadas del c
 
 La dirección de la API utilizada por el frontend deberá poder configurarse mediante variables de entorno.
 
+Las direcciones de las plataformas externas utilizadas para Fast Cred y Finan Ya deberán poder configurarse mediante variables de entorno del frontend.
+
+Los parámetros correspondientes a las reglas comerciales de cálculo de precios deberán administrarse mediante la configuración de precios persistida por el sistema.
+
 ---
 
 ## RNF-11 - Build del frontend
@@ -391,6 +461,5 @@ Fuera del alcance de la primera versión se consideran posibles mejoras:
 - reportes avanzados;
 - exportación de información;
 - stock mínimo configurable;
-- configuración dinámica de reglas de precios;
 - roles y permisos específicos;
 - despliegue de la aplicación.

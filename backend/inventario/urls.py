@@ -5,6 +5,7 @@ from .views import (
     ProductoViewSet,
     VarianteProductoViewSet,
     MovimientoStockViewSet,
+    ConfiguracionPreciosViewSet,
 )
 
 
@@ -32,6 +33,12 @@ router.register(
     "movimientos-stock",
     MovimientoStockViewSet,
     basename="movimiento-stock",
+)
+
+router.register(
+    "configuracion-precios",
+    ConfiguracionPreciosViewSet,
+    basename="configuracion-precios",
 )
 
 urlpatterns = router.urls

@@ -4,9 +4,9 @@
 
 El modelo de datos fue diseñado a partir del relevamiento del proceso actual de gestión de ventas e inventario.
 
-El objetivo es representar de forma estructurada los productos, sus diferentes variantes, las existencias disponibles, los movimientos de inventario y las operaciones de venta.
+El objetivo es representar de forma estructurada los productos, sus diferentes variantes, las existencias disponibles, los movimientos de inventario, las operaciones de venta y la configuración utilizada para el cálculo de precios.
 
-Se identificaron seis entidades principales:
+Se identificaron siete entidades principales:
 
 - Proveedor
 - Producto
@@ -14,12 +14,15 @@ Se identificaron seis entidades principales:
 - MovimientoStock
 - Venta
 - DetalleVenta
+- ConfiguracionPrecios
 
 ---
 
 ## Diagrama Entidad-Relación
 
 ![Diagrama Entidad-Relación](images/diagrama-er.png)
+
+> El diagrama deberá mantenerse actualizado respecto del modelo implementado, incluyendo la configuración de precios y los campos asociados a la verificación de transferencias.
 
 ---
 
@@ -62,7 +65,7 @@ El campo de estado permite mantener productos activos o inactivos sin necesidad 
 
 Los valores de costo y costo extra pertenecen a cada producto y pueden variar entre productos.
 
-A partir de estos valores se calculan los precios correspondientes a los diferentes medios de pago según las reglas de negocio definidas.
+A partir de estos valores y de los parámetros generales almacenados en `ConfiguracionPrecios`, el backend calcula los precios correspondientes a los diferentes medios de pago.
 
 Relaciones:
 
@@ -148,6 +151,18 @@ Contiene:
 - Fecha
 - Medio de pago
 - Total
+- Nombre del cliente para transferencia
+- Apellido del cliente para transferencia
+- Teléfono del cliente para transferencia
+- Estado de verificación de la transferencia
+
+Los datos de nombre, apellido y teléfono se utilizan cuando el medio de pago seleccionado es `TRANSFERENCIA`.
+
+Estos datos permiten conservar información de contacto del cliente para verificar posteriormente la acreditación del pago y comunicarse con él ante cualquier inconveniente.
+
+Las ventas realizadas mediante transferencia se registran inicialmente como pendientes de verificación.
+
+Una vez comprobada la acreditación del pago, el estado de la transferencia puede modificarse a verificada sin alterar los restantes datos de la venta.
 
 Una venta puede contener uno o múltiples artículos.
 
@@ -191,6 +206,38 @@ De esta forma, una modificación futura del costo o de las reglas de precios del
 
 ---
 
+## ConfiguracionPrecios
+
+Representa la configuración centralizada de los parámetros utilizados por el sistema para calcular los precios correspondientes a los diferentes medios de pago.
+
+La configuración permite administrar los valores utilizados en las reglas comerciales sin necesidad de modificar directamente el código fuente.
+
+Contiene los parámetros necesarios para calcular:
+
+- precio de tarjeta;
+- precio de débito;
+- precio de efectivo y transferencia;
+- precio de Fast Cred;
+- precio de Finan Ya.
+
+Las reglas comerciales parten de la siguiente estructura:
+
+```text
+Precio tarjeta = (Costo × multiplicador) + Costo extra
+Precio débito = Precio tarjeta - porcentaje configurado
+Precio efectivo / transferencia = Precio tarjeta - porcentaje configurado
+Precio Fast Cred = Precio efectivo
+Precio Finan Ya = Precio efectivo + porcentaje configurado
+```
+
+Los valores configurados son utilizados por el backend al calcular los precios de los productos.
+
+`ConfiguracionPrecios` no necesita una relación directa mediante clave foránea con `Producto`, ya que representa una configuración general utilizada por las reglas de negocio del sistema.
+
+De esta manera, los productos conservan sus propios valores de costo y costo extra, mientras que los parámetros generales de cálculo se administran de forma centralizada.
+
+---
+
 # Decisiones de diseño
 
 ## Separación entre Producto y VarianteProducto
@@ -210,6 +257,63 @@ Una misma operación puede incluir múltiples prendas.
 `Venta` representa la operación general, mientras que `DetalleVenta` representa cada artículo incluido en ella.
 
 Este diseño permite registrar una única venta con múltiples productos o variantes.
+
+---
+
+## Centralización de la configuración de precios
+
+Las reglas comerciales utilizadas para calcular los precios dependen de parámetros generales que pueden modificarse con el tiempo.
+
+Por este motivo, dichos parámetros se almacenan mediante `ConfiguracionPrecios` en lugar de mantenerse exclusivamente como valores fijos dentro del código fuente.
+
+La separación permite distinguir entre:
+
+```text
+Producto
+    ↓
+Costo + Costo extra
+
+ConfiguracionPrecios
+    ↓
+Parámetros generales de cálculo
+
+        ↓
+
+Precios por medio de pago
+```
+
+El backend combina ambos tipos de información para obtener los precios correspondientes.
+
+Esta decisión permite modificar los parámetros comerciales desde el sistema manteniendo centralizada en el backend la lógica responsable del cálculo.
+
+---
+
+## Datos y verificación de transferencias
+
+Las ventas realizadas mediante transferencia requieren información adicional debido a que la acreditación del pago puede verificarse posteriormente.
+
+Por este motivo, `Venta` conserva:
+
+- nombre del cliente;
+- apellido del cliente;
+- teléfono;
+- estado de verificación de la transferencia.
+
+Estos datos pertenecen a la propia operación y no justifican actualmente la creación de una entidad `Cliente`, ya que el sistema no contempla una gestión general de clientes dentro del alcance de la primera versión.
+
+El estado de verificación permite representar el siguiente flujo:
+
+```text
+Venta por transferencia
+        ↓
+Pendiente de verificación
+        ↓
+Comprobación de acreditación
+        ↓
+Transferencia verificada
+```
+
+La modificación del estado de verificación no afecta el stock, los movimientos de inventario, los detalles ni el importe histórico de la venta.
 
 ---
 
@@ -307,6 +411,27 @@ La operación se ejecuta de manera transaccional.
 
 Si se produce un error durante cualquiera de estos pasos, los cambios realizados dentro de la operación se revierten para evitar ventas parcialmente registradas o inconsistencias en el inventario.
 
+La información adicional correspondiente a una transferencia forma parte de la propia `Venta` y se registra dentro de la misma operación.
+
+---
+
+## Medios de pago y persistencia
+
+El sistema contempla diferentes medios de pago:
+
+- Efectivo
+- Transferencia
+- Tarjeta de débito
+- Tarjeta de crédito
+- Fast Cred
+- Finan Ya
+
+El medio de pago utilizado se almacena en `Venta`.
+
+Fast Cred y Finan Ya utilizan plataformas externas durante el proceso de cobro. El acceso a dichas plataformas forma parte del flujo del frontend, pero no genera nuevas entidades dentro del modelo de datos.
+
+La venta se registra en la base de datos únicamente cuando el usuario confirma la operación dentro del sistema.
+
 ---
 
 ## Uso de valores decimales para importes
@@ -314,6 +439,8 @@ Si se produce un error durante cualquiera de estos pasos, los cambios realizados
 Los valores monetarios se representan mediante campos decimales.
 
 Esta decisión evita los problemas de precisión que pueden producirse al utilizar números de punto flotante para operaciones monetarias.
+
+Los parámetros porcentuales y multiplicadores utilizados para las reglas de precios también deben conservar una precisión adecuada para los cálculos realizados por el backend.
 
 ---
 
@@ -325,9 +452,14 @@ Esto permite conservar el valor aplicado al momento de la operación independien
 
 - costo;
 - costo extra;
-- reglas de cálculo de precios.
+- configuración de precios;
+- reglas de cálculo.
 
 Por lo tanto, las ventas históricas no dependen de recalcular los precios actuales del producto.
+
+En las ventas realizadas mediante transferencia también se conservan los datos de contacto registrados en el momento de la operación y su estado de verificación.
+
+La modificación posterior de la configuración general de precios no altera los importes correspondientes a ventas previamente registradas.
 
 ---
 
@@ -340,6 +472,8 @@ Una variante asociada a movimientos de stock o ventas no debe eliminarse si esto
 Los productos incluyen además un estado activo/inactivo para permitir retirar productos de la operatoria sin necesidad de eliminar su información histórica.
 
 Un producto inactivo conserva sus datos y relaciones históricas, pero no puede utilizarse para registrar nuevas ventas.
+
+Las ventas y sus detalles constituyen información histórica de las operaciones realizadas y deben conservarse para mantener la trazabilidad del sistema.
 
 ---
 
@@ -368,7 +502,7 @@ PostgreSQL
 De esta forma:
 
 - PostgreSQL conserva la información persistente;
-- Django aplica las reglas de negocio y validaciones;
+- Django aplica las reglas de negocio, validaciones y cálculos;
 - React se encarga de la interacción con el usuario y la presentación de los datos.
 
 Esta separación evita mantener estados persistentes duplicados entre frontend y backend y permite conservar una única fuente de verdad para la información del sistema.
@@ -403,3 +537,40 @@ Stock bajo / sin stock
 ```
 
 Esta decisión evita almacenar información redundante que puede calcularse a partir de los datos persistidos.
+
+---
+
+## Resumen de relaciones
+
+Las principales relaciones del modelo pueden representarse de la siguiente manera:
+
+```text
+Proveedor
+   │
+   │ 1:N
+   ↓
+Producto
+   │
+   │ 1:N
+   ↓
+VarianteProducto
+   │
+   ├──────── 1:N ────────> MovimientoStock
+   │
+   └──────── 1:N ────────> DetalleVenta
+                                ↑
+                                │ N:1
+                                │
+                              Venta
+
+
+ConfiguracionPrecios
+        │
+        └── Configuración global utilizada
+            por las reglas de cálculo
+            de precios del backend
+```
+
+`ConfiguracionPrecios` funciona como una configuración general del sistema y no requiere una relación mediante clave foránea con las restantes entidades.
+
+El modelo permite mantener separadas las responsabilidades relacionadas con catálogo, inventario, ventas, trazabilidad y configuración comercial.

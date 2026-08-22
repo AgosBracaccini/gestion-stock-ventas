@@ -22,7 +22,13 @@ def obtener_precio(producto, medio_pago):
 
 
 @transaction.atomic
-def realizar_venta(medio_pago, items):
+def realizar_venta(
+    medio_pago,
+    items,
+    nombre_transferencia="",
+    apellido_transferencia="",
+    telefono_transferencia="",
+    ):
     if not items:
         raise ValidationError(
             "La venta debe contener al menos un producto."
@@ -48,7 +54,10 @@ def realizar_venta(medio_pago, items):
         )
     venta = Venta.objects.create(
         medio_pago=medio_pago,
-        total=Decimal("0.00")
+        total=Decimal("0.00"),
+        nombre_transferencia=nombre_transferencia,
+        apellido_transferencia=apellido_transferencia,
+        telefono_transferencia=telefono_transferencia,
     )
 
     total_venta = Decimal("0.00")

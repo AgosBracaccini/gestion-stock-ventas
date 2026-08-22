@@ -39,4 +39,15 @@ export const ventasService = {
       },
     );
   },
+
+  async verificarTransferencia(
+    id: number, 
+  ): Promise<Venta> {
+    return apiRequest<Venta>(
+      `${ENDPOINTS.ventas}${id}/verificar-transferencia/`,
+      {
+        method: "PATCH",
+      },
+    );
+  },
 };

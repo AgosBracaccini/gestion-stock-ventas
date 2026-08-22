@@ -103,6 +103,10 @@ export interface Venta {
   medio_pago: MedioPago;
   total: number;
   detalles?: DetalleVenta[];
+  nombre_transferencia?: string;
+  apellido_transferencia?: string;
+  telefono_transferencia?: string;
+  transferencia_verificada?: boolean;
 }
 
 export interface ResumenDashboard {
@@ -117,6 +121,10 @@ export interface ResumenDashboard {
 export interface NuevaVentaPayload {
   medio_pago: MedioPago;
   items: { variante_id: number; cantidad: number }[];
+  nombre_transferencia?: string;
+  apellido_transferencia?: string;
+  telefono_transferencia?: string;
+  transferencia_verificada?: boolean;
 }
 
 export interface IngresoMercaderiaPayload {
@@ -138,4 +146,13 @@ export interface Paginated<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+export interface ConfiguracionPrecios {
+  id: number;
+  multiplicador_tarjeta: string;
+  descuento_debito: string;
+  descuento_efectivo: string;
+  recargo_finan_ya: string;
+  actualizado: string;
 }

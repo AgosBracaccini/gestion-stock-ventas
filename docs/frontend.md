@@ -13,7 +13,8 @@ El frontend se encarga principalmente de:
 - administrar la sesión del usuario;
 - capturar los datos ingresados;
 - consumir los endpoints de la API;
-- mostrar los resultados y errores de las operaciones.
+- mostrar los resultados y errores de las operaciones;
+- facilitar el acceso a plataformas externas utilizadas durante determinados medios de pago.
 
 Las reglas críticas de negocio permanecen en el backend.
 
@@ -29,6 +30,7 @@ Las principales tecnologías utilizadas son:
 - React Router
 - TanStack React Query
 - Tailwind CSS
+- Lucide React
 
 ---
 
@@ -50,7 +52,7 @@ API REST
 Django REST Framework
 ```
 
-Esta separación permite mantener las responsabilidades de presentación y negocio desacopladas.
+Esta separación permite mantener desacopladas las responsabilidades de presentación y negocio.
 
 Los componentes y páginas no acceden directamente a PostgreSQL.
 
@@ -73,31 +75,39 @@ frontend/
 │   │
 │   ├── auth/
 │   ├── components/
+│   ├── hooks/
 │   ├── lib/
-│   ├── mocks/
 │   ├── pages/
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── styles.css
 │
 ├── package.json
+├── tsconfig.json
 └── vite.config.ts
 ```
 
 La capa `api` centraliza la comunicación con el backend y evita distribuir URLs y lógica HTTP entre los diferentes componentes.
 
+Los servicios se organizan según las funcionalidades principales del sistema, incluyendo productos, proveedores, ventas, movimientos y configuración de precios.
+
 ---
 
-## Configuración de la API
+## Configuración
 
-La dirección del backend se configura mediante una variable de entorno.
+La dirección del backend y las plataformas externas utilizadas durante determinados medios de pago se configuran mediante variables de entorno.
 
 Ejemplo:
 
 ```env
 VITE_API_URL=http://127.0.0.1:8000
-VITE_USE_MOCKS=false
+VITE_FAST_CRED_URL=https://ventapp.fastcred.ar/login
+VITE_FINAN_YA_URL=https://clientes.finanya.com.ar:9634/index.php
 ```
+
+`VITE_API_URL` indica la dirección de la API desarrollada con Django.
+
+`VITE_FAST_CRED_URL` y `VITE_FINAN_YA_URL` permiten configurar las direcciones de las plataformas externas utilizadas durante el procesamiento de esos medios de pago.
 
 Durante el desarrollo local, la aplicación utiliza normalmente:
 
@@ -167,7 +177,8 @@ Las rutas protegidas incluyen las pantallas de:
 - nueva venta;
 - historial de ventas;
 - movimientos;
-- proveedores.
+- proveedores;
+- configuración de precios.
 
 ---
 
@@ -278,6 +289,7 @@ El usuario puede:
 - agregar uno o múltiples artículos;
 - seleccionar el medio de pago;
 - visualizar el precio correspondiente;
+- completar información adicional cuando el medio de pago lo requiere;
 - confirmar la venta.
 
 Al confirmar, el frontend envía al backend la información necesaria para registrar la operación.
@@ -302,13 +314,88 @@ De esta forma, el frontend no replica las reglas críticas de ventas e inventari
 
 ---
 
+## Medios de pago
+
+La pantalla de nueva venta contempla:
+
+- efectivo;
+- transferencia;
+- tarjeta de débito;
+- tarjeta de crédito;
+- Fast Cred;
+- Finan Ya.
+
+El precio mostrado se actualiza según el medio de pago seleccionado utilizando los valores calculados por el backend.
+
+### Transferencia
+
+Cuando el usuario selecciona transferencia, la interfaz solicita:
+
+- nombre del cliente;
+- apellido del cliente;
+- teléfono.
+
+Los datos son enviados al backend junto con la venta.
+
+La transferencia queda inicialmente pendiente de verificación y puede ser confirmada posteriormente desde el historial de ventas.
+
+### Fast Cred y Finan Ya
+
+Cuando se selecciona Fast Cred o Finan Ya, el frontend permite acceder a la plataforma externa correspondiente antes de confirmar definitivamente la venta.
+
+El flujo general es:
+
+```text
+Seleccionar medio de pago
+        ↓
+Acceder a plataforma externa
+        ↓
+Realizar operación externa
+        ↓
+Regresar al sistema
+        ↓
+Confirmar que se completó el paso
+        ↓
+Registrar venta
+```
+
+El acceso a la plataforma externa no registra automáticamente una venta.
+
+La operación queda registrada en el sistema únicamente cuando el usuario realiza la confirmación correspondiente.
+
+---
+
 ## Historial de ventas
 
 Permite consultar las operaciones registradas.
 
-Para cada venta se puede visualizar información general y los artículos incluidos en ella.
+Para cada venta se puede visualizar:
+
+- fecha;
+- medio de pago;
+- total;
+- productos incluidos;
+- código;
+- prenda;
+- modelo;
+- color;
+- talle;
+- cantidad;
+- precio unitario;
+- subtotal.
 
 Los importes corresponden a los valores almacenados al momento de realizar cada operación.
+
+Cuando una venta fue realizada mediante transferencia, también se muestran:
+
+- nombre del cliente;
+- apellido del cliente;
+- teléfono;
+- estado de verificación.
+
+Desde esta pantalla una transferencia pendiente puede marcarse como verificada luego de comprobar la acreditación del pago.
+
+La verificación no modifica los detalles, importes ni movimientos de inventario correspondientes a la venta.
 
 ---
 
@@ -329,6 +416,27 @@ Los movimientos permiten mantener trazabilidad sobre las modificaciones del stoc
 ## Proveedores
 
 Permite gestionar la información de los proveedores asociados a los productos.
+
+---
+
+## Configuración de precios
+
+Permite consultar y modificar los parámetros generales utilizados por el backend para calcular los precios correspondientes a los diferentes medios de pago.
+
+Desde esta pantalla pueden administrarse los parámetros utilizados para:
+
+- precio de tarjeta;
+- precio de débito;
+- precio de efectivo y transferencia;
+- precio de Finan Ya.
+
+Fast Cred utiliza el mismo precio correspondiente a efectivo/transferencia.
+
+La interfaz no realiza por sí misma los cálculos definitivos de negocio.
+
+Los valores configurados se envían al backend, donde quedan persistidos y son utilizados posteriormente para calcular los precios de los productos.
+
+Esto permite modificar las condiciones comerciales sin necesidad de alterar directamente el código fuente.
 
 ---
 
@@ -386,6 +494,38 @@ Actualización de stock
 Movimiento VENTA
 ```
 
+## Transferencia
+
+```text
+React
+  ↓
+Datos del cliente
+  ↓
+API REST
+  ↓
+Venta por transferencia
+  ↓
+Pendiente de verificación
+  ↓
+Verificación posterior
+```
+
+## Configuración de precios
+
+```text
+React
+  ↓
+API REST
+  ↓
+Django
+  ↓
+ConfiguracionPrecios
+  ↓
+Reglas de cálculo
+  ↓
+Precios de productos
+```
+
 ## Dashboard
 
 ```text
@@ -414,24 +554,11 @@ Entre los casos contemplados se encuentran:
 - cantidades inválidas;
 - productos inactivos;
 - variantes inexistentes;
+- datos obligatorios faltantes para transferencias;
 - datos incorrectos durante una operación;
 - problemas de comunicación con la API.
 
 Las validaciones visuales del frontend mejoran la experiencia de usuario, pero no reemplazan las validaciones realizadas por Django.
-
----
-
-# Datos simulados
-
-Durante el desarrollo inicial de la interfaz se utilizaron datos simulados para facilitar la construcción y visualización de las pantallas.
-
-Estos datos se encuentran aislados de la lógica principal y su utilización puede controlarse mediante:
-
-```env
-VITE_USE_MOCKS=false
-```
-
-En la integración normal con Django se utilizan los datos reales proporcionados por la API.
 
 ---
 
@@ -474,6 +601,18 @@ Esta separación facilita el mantenimiento y evolución del sistema.
 
 ---
 
+## Plataformas externas de pago
+
+Fast Cred y Finan Ya se utilizan mediante sus respectivas plataformas externas.
+
+El frontend facilita el acceso a dichas plataformas, pero no implementa una integración directa con sus APIs.
+
+Esta decisión mantiene separado el procesamiento externo del pago del registro interno de la venta.
+
+La venta solo se registra cuando el usuario confirma dentro del sistema que completó el paso correspondiente.
+
+---
+
 ## Simplificación de la infraestructura frontend
 
 La interfaz fue inicialmente prototipada utilizando una herramienta de generación asistida.
@@ -482,7 +621,7 @@ Durante la integración se revisó y simplificó la arquitectura generada, conse
 
 El frontend quedó estructurado como una aplicación React + Vite independiente.
 
-Se eliminó infraestructura adicional que no resultaba necesaria debido a que el proyecto ya cuenta con un backend independiente desarrollado con Django.
+Se eliminó infraestructura adicional, datos simulados y dependencias de prototipado que dejaron de ser necesarias una vez completada la integración con el backend Django.
 
 ---
 
@@ -494,4 +633,6 @@ El frontend permite generar una versión de producción mediante:
 npm run build
 ```
 
-El proceso de build fue verificado durante el desarrollo para comprobar que la aplicación pueda compilarse correctamente.
+El proceso de build fue verificado durante el desarrollo.
+
+La versión actual compila correctamente para producción mediante Vite.
