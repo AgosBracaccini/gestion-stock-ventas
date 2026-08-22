@@ -5,7 +5,6 @@ import { ventasService } from "../api/services/ventas.service";
 import { MEDIOS_PAGO } from "../api/types";
 import type { Venta } from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { MockDataNotice } from "../components/common/MockDataNotice";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -39,7 +38,6 @@ export function VentasPage() {
   return (
     <>
       <PageHeader title="Historial de ventas" description="Ventas registradas y su detalle." />
-      <MockDataNotice />
 
       <div className="surface-panel p-4">
         <ErrorMessage error={error} />

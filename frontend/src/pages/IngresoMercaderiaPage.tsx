@@ -7,7 +7,6 @@ import { productosService } from "../api/services/productos.service";
 import { proveedoresService } from "../api/services/proveedores.service";
 import type { Producto } from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { MockDataNotice } from "../components/common/MockDataNotice";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -161,7 +160,6 @@ export function IngresoMercaderiaPage() {
         title="Ingreso de mercadería"
         description="Alta de productos, alta de variantes y reposición de stock según lo que responda la API."
       />
-      <MockDataNotice />
 
       <form
         onSubmit={(event) => {

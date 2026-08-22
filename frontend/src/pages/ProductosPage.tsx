@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { productosService } from "../api/services/productos.service";
 import { proveedoresService } from "../api/services/proveedores.service";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { MockDataNotice } from "../components/common/MockDataNotice";
 import { StockBadge } from "../components/common/StockBadge";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/badge";
@@ -78,7 +77,6 @@ export function ProductosPage() {
         title="Productos / Stock"
         description="Buscá por código, prenda, modelo, color o talle y controlá el stock de cada variante."
       />
-      <MockDataNotice />
 
       <div className="surface-panel p-4">
         <div className="grid gap-3 md:grid-cols-5">

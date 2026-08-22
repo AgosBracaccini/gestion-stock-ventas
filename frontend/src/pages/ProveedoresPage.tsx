@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { proveedoresService } from "../api/services/proveedores.service";
 import type { Proveedor } from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { MockDataNotice } from "../components/common/MockDataNotice";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/ui/button";
 import {
@@ -81,7 +80,6 @@ export function ProveedoresPage() {
           </Button>
         }
       />
-      <MockDataNotice />
 
       <div className="surface-panel p-4">
         <div className="relative max-w-sm">

@@ -8,7 +8,6 @@ import { ventasService } from "../api/services/ventas.service";
 import { MEDIOS_PAGO } from "../api/types";
 import type { MedioPago, Producto, VarianteProducto } from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { MockDataNotice } from "../components/common/MockDataNotice";
 import { StockBadge } from "../components/common/StockBadge";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/badge";
@@ -117,7 +116,6 @@ export function NuevaVentaPage() {
         title="Nueva venta"
         description="Código → variante → cantidad → agregar → medio de pago → confirmar."
       />
-      <MockDataNotice />
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
         <Card className="border-border/70 shadow-none">

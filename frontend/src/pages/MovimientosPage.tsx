@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { movimientosService } from "../api/services/movimientos.service";
 import type { TipoMovimiento } from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { MockDataNotice } from "../components/common/MockDataNotice";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -68,7 +67,6 @@ export function MovimientosPage() {
         title="Movimientos de stock"
         description="Entradas, ventas y ajustes registrados por el backend."
       />
-      <MockDataNotice />
 
       <div className="surface-panel p-4">
         <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
