@@ -217,6 +217,32 @@ Las transferencias se registran inicialmente como pendientes de verificación y 
 - Validación del rollback transaccional.
 - Build de producción del frontend verificado.
 
+## Capturas del sistema
+
+### Dashboard
+
+Resumen de ventas e inventario con métricas obtenidas a partir de los datos reales registrados en el sistema.
+
+![Dashboard](docs/images/screenshots/dashboard.png)
+
+### Nueva venta
+
+Registro de ventas con selección de variantes, control de stock, cálculo de precios según medio de pago y actualización automática del inventario.
+
+![Nueva venta](docs/images/screenshots/nueva-venta.png)
+
+### Ingreso de mercadería
+
+Alta de productos, creación de nuevas variantes y reposición de stock mediante un único flujo integrado con el backend.
+
+![Ingreso de mercadería](docs/images/screenshots/ingreso-mercaderia.png)
+
+### Historial y verificación de transferencias
+
+Consulta del detalle de las ventas y seguimiento del estado de los pagos realizados mediante transferencia.
+
+![Detalle de venta](docs/images/screenshots/detalle-venta.png)
+
 ## Reglas de negocio principales
 
 - El código de cada producto debe ser único.
