@@ -156,3 +156,21 @@ export interface ConfiguracionPrecios {
   recargo_finan_ya: string;
   actualizado: string;
 }
+
+export type ColorTienda =
+  | "rosa"
+  | "celeste"
+  | "verde"
+  | "violeta"
+  | "mostaza"
+  | "gris";
+
+export type IntensidadColor = "suave" | "medio" | "fuerte";
+
+export interface ConfiguracionTienda {
+  id: number;
+  nombre: string;
+  color: ColorTienda;
+  intensidad: IntensidadColor;
+  actualizado: string;
+}

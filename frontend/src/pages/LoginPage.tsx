@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { useAuth } from "../auth/AuthProvider";
+import { useTienda } from "../tienda/TiendaProvider";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 
 export function LoginPage() {
   const { login, isAuthenticated, ready } = useAuth();
+  const { nombre } = useTienda();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +39,7 @@ export function LoginPage() {
     <main className="bg-brand-gradient flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="font-display text-4xl text-foreground">Indumentaria</h1>
+          <h1 className="font-display text-4xl text-foreground">{nombre}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Gestión de ventas, productos e inventario
           </p>

@@ -175,3 +175,42 @@ class ConfiguracionPrecios(models.Model):
             pk=1
         )
         return configuracion
+    
+    
+class ConfiguracionTienda(models.Model):
+    COLORES_DISPONIBLES = [
+        ("rosa", "Rosa"),
+        ("celeste", "Celeste"),
+        ("verde", "Verde"),
+        ("violeta", "Violeta"),
+        ("mostaza", "Mostaza"),
+        ("gris", "Gris"),
+    ]
+
+    nombre = models.CharField(max_length=100, default="Mi Tienda")
+    color = models.CharField(max_length=20, choices=COLORES_DISPONIBLES, default="rosa")
+    
+    INTENSIDADES_DISPONIBLES = [
+        ("suave", "Suave"),
+        ("medio", "Medio"),
+        ("fuerte", "Fuerte"),
+    ]
+
+    intensidad = models.CharField(
+        max_length=20,
+        choices=INTENSIDADES_DISPONIBLES,
+        default="medio",
+    )
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuración de tienda"
+        verbose_name_plural = "Configuración de tienda"
+
+    def __str__(self):
+        return f"Configuración de {self.nombre}"
+
+    @classmethod
+    def obtener(cls):
+        configuracion, _ = cls.objects.get_or_create(pk=1)
+        return configuracion

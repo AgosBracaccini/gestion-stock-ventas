@@ -6,6 +6,7 @@ from .models import (
     VarianteProducto,
     MovimientoStock,
     ConfiguracionPrecios,
+    ConfiguracionTienda,
 )
 
 class ProveedorSerializer(serializers.ModelSerializer):
@@ -202,3 +203,14 @@ class ConfiguracionPreciosSerializer(
             )
 
         return value
+    
+class ConfiguracionTiendaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfiguracionTienda
+        fields = ["id", "nombre", "color", "actualizado"]
+        read_only_fields = ["id", "actualizado"]
+
+    def validate_nombre(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("El nombre no puede estar vacío.")
+        return value.strip()
