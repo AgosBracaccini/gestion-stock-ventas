@@ -174,3 +174,42 @@ export interface ConfiguracionTienda {
   intensidad: IntensidadColor;
   actualizado: string;
 }
+
+export type FormaEtiqueta = "rectangular" | "cuadrada" | "circular";
+
+export type PosicionNombreEtiqueta =
+  | "arriba_izquierda" | "arriba_centro" | "arriba_derecha"
+  | "centro_izquierda" | "centro" | "centro_derecha"
+  | "abajo_izquierda" | "abajo_centro" | "abajo_derecha";
+
+export type EstiloEtiqueta =
+  | "simple"
+  | "con_borde"
+  | "bordes_suaves"
+  | "relleno_solido"
+  | "marco_doble";
+
+export type FuenteEtiqueta =
+  | "georgia"
+  | "times"
+  | "arial"
+  | "verdana"
+  | "courier"
+  | "trebuchet";
+
+export interface ConfiguracionEtiqueta {
+  id: number;
+  forma: FormaEtiqueta;
+  ancho_cm: string;
+  alto_cm: string;
+  color_fondo: string;
+  color_texto: string;
+  color_texto_tienda: string;
+  color_rectangulos: string;
+  estilo: EstiloEtiqueta;
+  fuente: FuenteEtiqueta;
+  tamano_texto_tienda: number;
+  tamano_texto_codigo: number;
+  posicion_nombre: PosicionNombreEtiqueta;
+  actualizado: string;
+}

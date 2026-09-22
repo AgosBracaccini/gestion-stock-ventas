@@ -8,6 +8,8 @@ import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { Toaster } from "./components/ui/sonner";
 import { ConfiguracionPreciosPage } from "./pages/ConfiguracionPreciosPage";
 import { ConfiguracionTiendaPage } from "./pages/ConfiguracionTiendaPage";
+import { ConfiguracionEtiquetaPage } from "./pages/ConfiguracionEtiquetaPage";
+import { GenerarEtiquetasPage } from "./pages/GenerarEtiquetasPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { IngresoMercaderiaPage } from "./pages/IngresoMercaderiaPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -94,6 +96,10 @@ export function App() {
                   <Route path="/configuracion-precios" element={<ConfiguracionPreciosPage />} />
 
                   <Route path="/configuracion-tienda" element={<ConfiguracionTiendaPage />} />
+
+                  <Route path="/configuracion-etiqueta" element={<ConfiguracionEtiquetaPage />} />
+
+                  <Route path="/generar-etiquetas" element={<GenerarEtiquetasPage />} />
                 </Route>
               </Route>
 

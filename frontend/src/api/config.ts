@@ -16,6 +16,7 @@ export const ENDPOINTS = {
   proveedores: "/api/proveedores/",
   configuracionPrecios: "/api/configuracion-precios/",
   configuracionTienda: "/api/configuracion-tienda/",
+  configuracionEtiqueta: "/api/configuracion-etiqueta/",
 } as const;
 
 export const STOCK_BAJO_UMBRAL = 3;
