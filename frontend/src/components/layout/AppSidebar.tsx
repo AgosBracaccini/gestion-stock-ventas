@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Truck,
   Settings,
+  Palette,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthProvider";
@@ -25,6 +26,8 @@ import {
   SidebarMenuItem,
 } from "../ui/sidebar";
 
+import { useTienda } from "../../tienda/TiendaProvider";
+
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/nueva-venta", label: "Nueva venta", icon: ShoppingBag },
@@ -38,16 +41,22 @@ const items = [
     to: "/configuracion-precios",
     icon: Settings,
   },
+  {
+    label: "Configuración de tienda",
+    to: "/configuracion-tienda",
+    icon: Palette,
+  },
 ] as const;
 
 export function AppSidebar() {
   const { logout, username } = useAuth();
+  const { nombre } = useTienda();
 
   return (
     <Sidebar>
       <SidebarHeader className="px-4 py-5">
-        <span className="font-display text-2xl text-sidebar-foreground">Indumentaria</span>
-        <span className="text-xs text-muted-foreground">Gestión de ventas y stock</span>
+        <span className="font-display text-2xl text-sidebar-foreground">{nombre}</span>
+        <span className="text-xs text-sidebar-foreground/70">Gestión de ventas y stock</span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -60,7 +69,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 ${isActive ? "font-medium text-foreground" : ""}`
+                        `flex items-center gap-3 ${isActive ? "font-medium text-sidebar-accent-foreground" : ""}`
                       }
                     >
                       <item.icon className="size-4" />
@@ -74,8 +83,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="gap-2 px-3 py-4">
-        {username ? <p className="px-1 text-xs text-muted-foreground">Sesión: {username}</p> : null}
-        <SidebarMenuButton onClick={logout} className="text-muted-foreground">
+        {username ? <p className="px-1 text-xs text-sidebar-foreground/70">Sesión: {username}</p> : null}
+        <SidebarMenuButton onClick={logout} className="text-sidebar-foreground/80">
           <LogOut className="size-4" />
           <span>Cerrar sesión</span>
         </SidebarMenuButton>
@@ -83,3 +92,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

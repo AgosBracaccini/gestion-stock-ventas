@@ -1,6 +1,6 @@
 import { ENDPOINTS } from "../config";
 import { apiRequest } from "../http";
-import type { ConfiguracionPrecios } from "../types";
+import type { ConfiguracionPrecios, ConfiguracionTienda } from "../types";
 
 export const configuracionService = {
   async obtener(): Promise<ConfiguracionPrecios> {
@@ -20,5 +20,17 @@ export const configuracionService = {
         body: cambios,
       },
     );
+  },
+};
+
+export const configuracionTiendaService = {
+  async obtener(): Promise<ConfiguracionTienda> {
+    return apiRequest<ConfiguracionTienda>(ENDPOINTS.configuracionTienda);
+  },
+  async actualizar(id: number, cambios: Partial<ConfiguracionTienda>): Promise<ConfiguracionTienda> {
+    return apiRequest<ConfiguracionTienda>(`${ENDPOINTS.configuracionTienda}${id}/`, {
+      method: "PATCH",
+      body: cambios,
+    });
   },
 };
