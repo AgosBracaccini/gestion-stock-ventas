@@ -203,6 +203,8 @@ export interface ConfiguracionEtiqueta {
   ancho_cm: string;
   alto_cm: string;
   color_fondo: string;
+  color_fondo_2: string;
+  subtitulo: string;
   color_texto: string;
   color_texto_tienda: string;
   color_rectangulos: string;

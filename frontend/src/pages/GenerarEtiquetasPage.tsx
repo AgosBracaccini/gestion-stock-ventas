@@ -267,7 +267,7 @@ export function GenerarEtiquetasPage() {
           <CardContent className="overflow-auto">
             {config && paginas[0] ? (
               <div
-                className="grid gap-2 bg-white p-2"
+                className="grid content-start gap-2 bg-white p-2"
                 style={{ gridTemplateColumns: `repeat(${columnas}, ${ancho * 24}px)` }}
               >
                 {paginas[0].map((et, i) => (
@@ -294,7 +294,7 @@ export function GenerarEtiquetasPage() {
           paginas.map((pagina, indice) => (
             <div
               key={indice}
-              className="pagina-etiquetas grid gap-[0.2cm]"
+              className="pagina-etiquetas grid content-start gap-[0.2cm]"
               style={{
                 width: `${A4_ANCHO_CM}cm`,
                 minHeight: `${A4_ALTO_CM}cm`,
@@ -348,7 +348,7 @@ function EtiquetaImpresa({
       className="flex flex-col justify-between overflow-hidden p-2"
       style={{
         ...dimensiones,
-        backgroundColor: config.color_fondo,
+        background: `linear-gradient(135deg, ${config.color_fondo}, ${config.color_fondo_2})`,
         fontFamily: fontFamilyDe(config.fuente),
         borderRadius: radioEtiqueta(config.forma, config.estilo),
         border: bordeEtiqueta(config.estilo, config.color_texto),
@@ -356,7 +356,7 @@ function EtiquetaImpresa({
       }}
     >
       <div
-        className="flex flex-1"
+        className="flex flex-1 flex-col"
         style={{
           alignItems: ALIGN_POR_FILA[posicion.fila],
           justifyContent: JUSTIFY_POR_COLUMNA[posicion.columna],
@@ -368,31 +368,42 @@ function EtiquetaImpresa({
         >
           {nombreTienda}
         </span>
-      </div>
-
-      <div className="flex flex-col items-center justify-center gap-1">
-        {[producto.codigo, variante.talle].map((valor, i) => (
+        {config.subtitulo ? (
           <span
-            key={i}
-            className="px-2 py-1 text-center font-medium leading-none"
-            style={{
-              backgroundColor: config.estilo === "relleno_solido" ? config.color_rectangulos : "transparent",
-              color: config.color_texto,
-              fontSize: `${config.tamano_texto_codigo}pt`,
-              borderRadius: radioRecuadro(config.estilo),
-              border: bordeRecuadro(config.estilo, config.color_texto),
-            }}
+            className="tracking-wide"
+            style={{ color: config.color_texto_tienda, fontSize: `${config.tamano_texto_tienda * 0.6}pt` }}
           >
-            {valor}
+            {config.subtitulo}
           </span>
-        ))}
+        ) : null}
       </div>
 
-      <div
-        className="text-center font-semibold"
-        style={{ color: config.color_texto, fontSize: `${config.tamano_texto_codigo}pt` }}
-      >
-        {formatMoney(producto.precio_efectivo)}
+      <div className="flex flex-col items-center justify-center gap-1.5">
+        {[
+          { etiqueta: "Código", valor: producto.codigo },
+          { etiqueta: "Talle", valor: variante.talle },
+        ].map((campo) => (
+          <div key={campo.etiqueta} className="flex flex-col items-center gap-0.5">
+            <span
+              className="uppercase leading-none opacity-70"
+              style={{ color: config.color_texto, fontSize: `${config.tamano_texto_codigo * 0.55}pt` }}
+            >
+              {campo.etiqueta}
+            </span>
+            <span
+              className="px-2 py-1 text-center font-medium leading-none"
+              style={{
+                backgroundColor: config.estilo === "relleno_solido" ? config.color_rectangulos : "transparent",
+                color: config.color_texto,
+                fontSize: `${config.tamano_texto_codigo}pt`,
+                borderRadius: radioRecuadro(config.estilo),
+                border: bordeRecuadro(config.estilo, config.color_texto),
+              }}
+            >
+              {campo.valor}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

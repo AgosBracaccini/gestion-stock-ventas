@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 
 from .models import (
@@ -7,6 +9,7 @@ from .models import (
     MovimientoStock,
     ConfiguracionPrecios,
     ConfiguracionTienda,
+    ConfiguracionEtiqueta,
 )
 
 class ProveedorSerializer(serializers.ModelSerializer):
@@ -214,3 +217,60 @@ class ConfiguracionTiendaSerializer(serializers.ModelSerializer):
         if not value.strip():
             raise serializers.ValidationError("El nombre no puede estar vacío.")
         return value.strip()
+    
+class ConfiguracionEtiquetaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfiguracionEtiqueta
+        fields = ["id", "forma", "ancho_cm", "alto_cm",             "color_fondo",
+            "color_fondo_2",
+            "subtitulo",
+            "color_texto",
+            "color_texto_tienda",
+            "color_rectangulos",
+            "estilo",
+            "fuente",
+            "tamano_texto_tienda",
+            "tamano_texto_codigo",
+            "posicion_nombre", "actualizado"]
+        read_only_fields = ["id", "actualizado"]
+
+    def _validar_color(self, value):
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+            raise serializers.ValidationError("El color debe tener formato hexadecimal, por ejemplo #ffffff.")
+        return value.lower()
+
+    def validate_color_fondo(self, value):
+        return self._validar_color(value)
+
+    def validate_color_fondo_2(self, value):
+        return self._validar_color(value)
+
+    def validate_color_texto(self, value):
+        return self._validar_color(value)
+
+    def validate_color_texto_tienda(self, value):
+        return self._validar_color(value)
+
+    def validate_color_rectangulos(self, value):
+        return self._validar_color(value)
+
+    def _validar_tamano(self, value):
+        if value < 6 or value > 72:
+            raise serializers.ValidationError("El tamaño de letra debe estar entre 6 y 72.")
+        return value
+
+    def validate_tamano_texto_tienda(self, value):
+        return self._validar_tamano(value)
+
+    def validate_tamano_texto_codigo(self, value):
+        return self._validar_tamano(value)
+
+    def validate_ancho_cm(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El ancho debe ser mayor a cero.")
+        return value
+
+    def validate_alto_cm(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El alto debe ser mayor a cero.")
+        return value

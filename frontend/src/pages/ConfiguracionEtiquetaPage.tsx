@@ -54,6 +54,8 @@ export function ConfiguracionEtiquetaPage() {
   const [anchoCm, setAnchoCm] = useState("5.0");
   const [altoCm, setAltoCm] = useState("3.0");
   const [colorFondo, setColorFondo] = useState("#ffffff");
+  const [colorFondo2, setColorFondo2] = useState("#ffffff");
+  const [subtitulo, setSubtitulo] = useState("");
   const [colorTexto, setColorTexto] = useState("#1a1a1a");
   const [colorTextoTienda, setColorTextoTienda] = useState("#1a1a1a");
   const [colorRectangulos, setColorRectangulos] = useState("#f2f2f2");
@@ -78,6 +80,8 @@ export function ConfiguracionEtiquetaPage() {
     setAnchoCm(configuracion.ancho_cm);
     setAltoCm(configuracion.forma === "circular" ? configuracion.ancho_cm : configuracion.alto_cm);
     setColorFondo(configuracion.color_fondo);
+    setColorFondo2(configuracion.color_fondo_2);
+    setSubtitulo(configuracion.subtitulo);
     setColorTexto(configuracion.color_texto);
     setColorTextoTienda(configuracion.color_texto_tienda);
     setColorRectangulos(configuracion.color_rectangulos);
@@ -99,6 +103,8 @@ export function ConfiguracionEtiquetaPage() {
         ancho_cm: anchoCm,
         alto_cm: forma === "circular" ? anchoCm : altoCm,
         color_fondo: colorFondo,
+        color_fondo_2: colorFondo2,
+        subtitulo,
         color_texto: colorTexto,
         color_texto_tienda: colorTextoTienda,
         color_rectangulos: colorRectangulos,
@@ -252,6 +258,20 @@ export function ConfiguracionEtiquetaPage() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="subtitulo-etiqueta">Subtítulo (opcional)</Label>
+              <Input
+                id="subtitulo-etiqueta"
+                placeholder="Ej: INDUMENTARIA"
+                value={subtitulo}
+                onChange={(event) => setSubtitulo(event.target.value)}
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground">
+                Aparece debajo del nombre de la tienda, en letra más chica. Dejalo vacío si no lo querés.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="color-fondo">Fondo de la etiqueta</Label>
@@ -260,6 +280,17 @@ export function ConfiguracionEtiquetaPage() {
                   type="color"
                   value={colorFondo}
                   onChange={(event) => setColorFondo(event.target.value)}
+                  className="h-10 w-full cursor-pointer p-1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="color-fondo-2">Fondo (2º color, degradé)</Label>
+                <Input
+                  id="color-fondo-2"
+                  type="color"
+                  value={colorFondo2}
+                  onChange={(event) => setColorFondo2(event.target.value)}
                   className="h-10 w-full cursor-pointer p-1"
                 />
               </div>
@@ -350,14 +381,14 @@ export function ConfiguracionEtiquetaPage() {
               style={{
                 width: `${ancho * escala}px`,
                 height: `${alto * escala}px`,
-                backgroundColor: colorFondo,
+                background: `linear-gradient(135deg, ${colorFondo}, ${colorFondo2})`,
                 fontFamily: fontFamilyDe(fuente),
                 borderRadius: radioEtiqueta(forma, estilo),
                 border: bordeEtiqueta(estilo, colorTexto),
               }}
             >
               <div
-                className="flex flex-1"
+                className="flex flex-1 flex-col"
                 style={{
                   alignItems: ALIGN_POR_FILA[posicionActual.fila],
                   justifyContent: JUSTIFY_POR_COLUMNA[posicionActual.columna],
@@ -369,28 +400,42 @@ export function ConfiguracionEtiquetaPage() {
                 >
                   {nombreTienda}
                 </span>
-              </div>
-
-              <div className="flex flex-col items-center justify-center gap-1">
-                {["8081", "M"].map((valor) => (
+                {subtitulo ? (
                   <span
-                    key={valor}
-                    className="px-2 py-1 text-center font-medium leading-none"
-                    style={{
-                      backgroundColor: estilo === "relleno_solido" ? colorRectangulos : "transparent",
-                      color: colorTexto,
-                      fontSize: `${tamanoCodigo}pt`,
-                      borderRadius: radioRecuadro(estilo),
-                      border: bordeRecuadro(estilo, colorTexto),
-                    }}
+                    className="tracking-wide"
+                    style={{ color: colorTextoTienda, fontSize: `${Number(tamanoTienda) * 0.6}pt` }}
                   >
-                    {valor}
+                    {subtitulo}
                   </span>
-                ))}
+                ) : null}
               </div>
 
-              <div className="text-center font-semibold" style={{ color: colorTexto, fontSize: `${tamanoCodigo}pt` }}>
-                $12.500
+              <div className="flex flex-col items-center justify-center gap-1.5">
+                {[
+                  { etiqueta: "Código", valor: "8081" },
+                  { etiqueta: "Talle", valor: "M" },
+                ].map((campo) => (
+                  <div key={campo.etiqueta} className="flex flex-col items-center gap-0.5">
+                    <span
+                      className="uppercase leading-none opacity-70"
+                      style={{ color: colorTexto, fontSize: `${Number(tamanoCodigo) * 0.55}pt` }}
+                    >
+                      {campo.etiqueta}
+                    </span>
+                    <span
+                      className="px-2 py-1 text-center font-medium leading-none"
+                      style={{
+                        backgroundColor: estilo === "relleno_solido" ? colorRectangulos : "transparent",
+                        color: colorTexto,
+                        fontSize: `${tamanoCodigo}pt`,
+                        borderRadius: radioRecuadro(estilo),
+                        border: bordeRecuadro(estilo, colorTexto),
+                      }}
+                    >
+                      {campo.valor}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </CardContent>

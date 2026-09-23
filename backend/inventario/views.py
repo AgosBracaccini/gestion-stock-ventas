@@ -11,6 +11,7 @@ from .models import (
     MovimientoStock,
     ConfiguracionPrecios,
     ConfiguracionTienda,
+    ConfiguracionEtiqueta,
 )
 
 from .serializers import (
@@ -22,6 +23,7 @@ from .serializers import (
     IngresoMercaderiaSerializer,
     ConfiguracionPreciosSerializer,
     ConfiguracionTiendaSerializer,
+    ConfiguracionEtiquetaSerializer,
 )
 
 from .services import (
@@ -287,6 +289,19 @@ class ConfiguracionTiendaViewSet(viewsets.ViewSet):
     def partial_update(self, request, pk=None):
         configuracion = ConfiguracionTienda.obtener()
         serializer = ConfiguracionTiendaSerializer(configuracion, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    
+class ConfiguracionEtiquetaViewSet(viewsets.ViewSet):
+    def list(self, request):
+        configuracion = ConfiguracionEtiqueta.obtener()
+        serializer = ConfiguracionEtiquetaSerializer(configuracion)
+        return Response(serializer.data)
+
+    def partial_update(self, request, pk=None):
+        configuracion = ConfiguracionEtiqueta.obtener()
+        serializer = ConfiguracionEtiquetaSerializer(configuracion, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
