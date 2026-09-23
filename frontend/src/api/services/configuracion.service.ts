@@ -1,6 +1,6 @@
 import { ENDPOINTS } from "../config";
 import { apiRequest } from "../http";
-import type { ConfiguracionPrecios, ConfiguracionTienda } from "../types";
+import type { ConfiguracionPrecios, ConfiguracionTienda, ConfiguracionEtiqueta } from "../types";
 
 export const configuracionService = {
   async obtener(): Promise<ConfiguracionPrecios> {
@@ -29,6 +29,18 @@ export const configuracionTiendaService = {
   },
   async actualizar(id: number, cambios: Partial<ConfiguracionTienda>): Promise<ConfiguracionTienda> {
     return apiRequest<ConfiguracionTienda>(`${ENDPOINTS.configuracionTienda}${id}/`, {
+      method: "PATCH",
+      body: cambios,
+    });
+  },
+};
+
+export const configuracionEtiquetaService = {
+  async obtener(): Promise<ConfiguracionEtiqueta> {
+    return apiRequest<ConfiguracionEtiqueta>(ENDPOINTS.configuracionEtiqueta);
+  },
+  async actualizar(id: number, cambios: Partial<ConfiguracionEtiqueta>): Promise<ConfiguracionEtiqueta> {
+    return apiRequest<ConfiguracionEtiqueta>(`${ENDPOINTS.configuracionEtiqueta}${id}/`, {
       method: "PATCH",
       body: cambios,
     });

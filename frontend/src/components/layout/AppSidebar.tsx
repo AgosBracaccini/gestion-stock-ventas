@@ -10,9 +10,12 @@ import {
   Truck,
   Settings,
   Palette,
+  Tag,
+  Printer,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthProvider";
+import { useTienda } from "../../tienda/TiendaProvider";
 import {
   Sidebar,
   SidebarContent,
@@ -25,8 +28,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
-
-import { useTienda } from "../../tienda/TiendaProvider";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -45,6 +46,16 @@ const items = [
     label: "Configuración de tienda",
     to: "/configuracion-tienda",
     icon: Palette,
+  },
+  {
+    label: "Diseño de etiqueta",
+    to: "/configuracion-etiqueta",
+    icon: Tag,
+  },
+  {
+    label: "Generar etiquetas",
+    to: "/generar-etiquetas",
+    icon: Printer,
   },
 ] as const;
 
@@ -92,4 +103,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
