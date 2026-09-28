@@ -10,6 +10,9 @@ import { ConfiguracionPreciosPage } from "./pages/ConfiguracionPreciosPage";
 import { ConfiguracionTiendaPage } from "./pages/ConfiguracionTiendaPage";
 import { ConfiguracionEtiquetaPage } from "./pages/ConfiguracionEtiquetaPage";
 import { GenerarEtiquetasPage } from "./pages/GenerarEtiquetasPage";
+import { CajasPage } from "./pages/CajasPage";
+import { CajaDetallePage } from "./pages/CajaDetallePage";
+import { CajaPublicaPage } from "./pages/CajaPublicaPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { IngresoMercaderiaPage } from "./pages/IngresoMercaderiaPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -77,6 +80,8 @@ export function App() {
             <Routes>
               <Route path="/" element={<LoginPage />} />
 
+              <Route path="/cajas/publica/:codigo" element={<CajaPublicaPage />} />
+
               <Route element={<RutaProtegida />}>
                 <Route element={<LayoutAutenticado />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
@@ -100,6 +105,12 @@ export function App() {
                   <Route path="/configuracion-etiqueta" element={<ConfiguracionEtiquetaPage />} />
 
                   <Route path="/generar-etiquetas" element={<GenerarEtiquetasPage />} />
+
+                  <Route path="/cajas" element={<CajasPage />} />
+
+                  <Route path="/cajas/nueva" element={<CajaDetallePage />} />
+
+                  <Route path="/cajas/:id" element={<CajaDetallePage />} />
                 </Route>
               </Route>
 

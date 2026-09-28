@@ -10,6 +10,8 @@ from .models import (
     ConfiguracionPrecios,
     ConfiguracionTienda,
     ConfiguracionEtiqueta,
+    Caja,
+    CajaItem,
 )
 
 class ProveedorSerializer(serializers.ModelSerializer):
@@ -274,3 +276,77 @@ class ConfiguracionEtiquetaSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("El alto debe ser mayor a cero.")
         return value
+
+class VarianteEnCajaSerializer(serializers.ModelSerializer):
+    """Vista de lectura, liviana, de una variante dentro del contenido de una caja."""
+    producto_codigo = serializers.CharField(source="producto.codigo", read_only=True)
+    prenda = serializers.CharField(source="producto.prenda", read_only=True)
+    modelo = serializers.CharField(source="producto.modelo", read_only=True)
+
+    class Meta:
+        model = VarianteProducto
+        fields = ["id", "producto_codigo", "prenda", "modelo", "color", "talle"]
+
+
+class CajaItemSerializer(serializers.ModelSerializer):
+    variante_id = serializers.IntegerField(write_only=True)
+    variante = VarianteEnCajaSerializer(read_only=True)
+
+    class Meta:
+        model = CajaItem
+        fields = ["id", "variante_id", "variante", "cantidad"]
+
+    def validate_cantidad(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                "La cantidad debe ser al menos 1."
+            )
+        return value
+
+    def validate_variante_id(self, value):
+        if not VarianteProducto.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                "La variante indicada no existe."
+            )
+        return value
+
+
+class CajaSerializer(serializers.ModelSerializer):
+    items = CajaItemSerializer(many=True)
+    numero = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Caja
+        fields = ["id", "numero", "nombre", "codigo_publico", "creado", "items"]
+        read_only_fields = ["id", "numero", "codigo_publico", "creado"]
+
+    def get_numero(self, obj):
+        return obj.id
+
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "La caja debe tener al menos un artículo."
+            )
+        return value
+
+    def create(self, validated_data):
+        items_data = validated_data.pop("items")
+        caja = Caja.objects.create(**validated_data)
+        for item in items_data:
+            variante_id = item.pop("variante_id")
+            CajaItem.objects.create(caja=caja, variante_id=variante_id, **item)
+        return caja
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop("items", None)
+        instance.nombre = validated_data.get("nombre", instance.nombre)
+        instance.save()
+
+        if items_data is not None:
+            instance.items.all().delete()
+            for item in items_data:
+                variante_id = item.pop("variante_id")
+                CajaItem.objects.create(caja=instance, variante_id=variante_id, **item)
+
+        return instance

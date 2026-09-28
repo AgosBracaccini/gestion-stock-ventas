@@ -1,5 +1,6 @@
 from django.db import models
 from decimal import Decimal
+import uuid
 
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=100)
@@ -337,3 +338,54 @@ class ConfiguracionEtiqueta(models.Model):
     def obtener(cls):
         configuracion, _ = cls.objects.get_or_create(pk=1)
         return configuracion
+
+class Caja(models.Model):
+    """
+    Unidad de almacenamiento en depósito. Cada caja tiene un código
+    público (UUID, no adivinable) que se imprime como QR y permite
+    consultar su contenido sin necesidad de iniciar sesión.
+    """
+
+    codigo_publico = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+
+    nombre = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    creado = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-creado"]
+
+    def __str__(self):
+        etiqueta = f"Caja #{self.id}"
+        if self.nombre:
+            etiqueta += f" — {self.nombre}"
+        return etiqueta
+
+
+class CajaItem(models.Model):
+    caja = models.ForeignKey(
+        Caja,
+        related_name="items",
+        on_delete=models.CASCADE,
+    )
+
+    variante = models.ForeignKey(
+        VarianteProducto,
+        related_name="items_en_cajas",
+        on_delete=models.PROTECT,
+    )
+
+    cantidad = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.variante} x{self.cantidad} en {self.caja}"

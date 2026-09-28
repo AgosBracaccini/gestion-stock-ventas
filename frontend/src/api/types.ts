@@ -215,3 +215,37 @@ export interface ConfiguracionEtiqueta {
   posicion_nombre: PosicionNombreEtiqueta;
   actualizado: string;
 }
+
+export interface VarianteEnCaja {
+  id: number;
+  producto_codigo: string;
+  prenda: string;
+  modelo: string;
+  color: string;
+  talle: string;
+}
+
+export interface CajaItem {
+  id: number;
+  variante: VarianteEnCaja;
+  cantidad: number;
+}
+
+export interface Caja {
+  id: number;
+  numero: number;
+  nombre: string;
+  codigo_publico: string;
+  creado: string;
+  items: CajaItem[];
+}
+
+export interface CajaItemInput {
+  variante_id: number;
+  cantidad: number;
+}
+
+export interface CajaInput {
+  nombre: string;
+  items: CajaItemInput[];
+}
