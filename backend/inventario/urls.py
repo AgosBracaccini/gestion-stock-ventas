@@ -8,8 +8,8 @@ from .views import (
     ConfiguracionPreciosViewSet,
     ConfiguracionTiendaViewSet,
     ConfiguracionEtiquetaViewSet,
+    CajaViewSet,
 )
-
 
 router = DefaultRouter()
 
@@ -53,6 +53,12 @@ router.register(
     "configuracion-etiqueta",
     ConfiguracionEtiquetaViewSet,
     basename="configuracion-etiqueta",
+)
+
+router.register(
+    "cajas",
+    CajaViewSet,
+    basename="caja",
 )
 
 urlpatterns = router.urls

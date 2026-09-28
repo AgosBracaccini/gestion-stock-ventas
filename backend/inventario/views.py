@@ -1,7 +1,9 @@
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import (
@@ -12,6 +14,7 @@ from .models import (
     ConfiguracionPrecios,
     ConfiguracionTienda,
     ConfiguracionEtiqueta,
+    Caja,
 )
 
 from .serializers import (
@@ -24,6 +27,7 @@ from .serializers import (
     ConfiguracionPreciosSerializer,
     ConfiguracionTiendaSerializer,
     ConfiguracionEtiquetaSerializer,
+    CajaSerializer,
 )
 
 from .services import (
@@ -304,4 +308,36 @@ class ConfiguracionEtiquetaViewSet(viewsets.ViewSet):
         serializer = ConfiguracionEtiquetaSerializer(configuracion, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        return Response(serializer.data)
+    
+class CajaViewSet(viewsets.ModelViewSet):
+    queryset = (
+        Caja.objects
+        .prefetch_related("items__variante__producto")
+        .all()
+    )
+
+    serializer_class = CajaSerializer
+
+    # La consulta pública (por código UUID) no requiere login: es lo que
+    # se abre al escanear el QR pegado en la caja. Todo lo demás (listar,
+    # crear, editar, borrar cajas) sigue requiriendo sesión iniciada.
+    def get_permissions(self):
+        if self.action == "publica":
+            return [AllowAny()]
+        return super().get_permissions()
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="publica/(?P<codigo_publico>[^/.]+)",
+    )
+    def publica(self, request, codigo_publico=None):
+        caja = get_object_or_404(
+            self.get_queryset(),
+            codigo_publico=codigo_publico,
+        )
+
+        serializer = self.get_serializer(caja)
+
         return Response(serializer.data)
