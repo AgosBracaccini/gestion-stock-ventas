@@ -10,6 +10,7 @@ import { ConfiguracionPreciosPage } from "./pages/ConfiguracionPreciosPage";
 import { ConfiguracionTiendaPage } from "./pages/ConfiguracionTiendaPage";
 import { ConfiguracionEtiquetaPage } from "./pages/ConfiguracionEtiquetaPage";
 import { GenerarEtiquetasPage } from "./pages/GenerarEtiquetasPage";
+import { ImportarExcelPage } from "./pages/ImportarExcelPage";
 import { CajasPage } from "./pages/CajasPage";
 import { CajaDetallePage } from "./pages/CajaDetallePage";
 import { CajaPublicaPage } from "./pages/CajaPublicaPage";
@@ -111,6 +112,8 @@ export function App() {
                   <Route path="/cajas/nueva" element={<CajaDetallePage />} />
 
                   <Route path="/cajas/:id" element={<CajaDetallePage />} />
+
+                  <Route path="/importar-excel" element={<ImportarExcelPage />} />
                 </Route>
               </Route>
 

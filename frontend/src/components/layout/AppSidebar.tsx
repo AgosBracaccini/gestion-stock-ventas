@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Truck,
   Package,
+  FileSpreadsheet,
   Settings,
   Palette,
   Tag,
@@ -39,6 +40,7 @@ const items = [
   { to: "/movimientos", label: "Movimientos", icon: ArrowLeftRight },
   { to: "/proveedores", label: "Proveedores", icon: Truck },
   { to: "/cajas", label: "Cajas", icon: Package },
+  { to: "/importar-excel", label: "Importar Excel", icon: FileSpreadsheet },
   {
     label: "Configuración de precios",
     to: "/configuracion-precios",

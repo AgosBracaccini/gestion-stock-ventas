@@ -18,6 +18,10 @@ export const ENDPOINTS = {
   configuracionTienda: "/api/configuracion-tienda/",
   configuracionEtiqueta: "/api/configuracion-etiqueta/",
   cajas: "/api/cajas/",
+  importarPrecios: "/api/importar/precios/",
+  importarStock: "/api/importar/stock/",
+  corregirPrecio: "/api/importar/precios/fila/",
+  corregirStock: "/api/importar/stock/fila/",
 } as const;
 
 export const STOCK_BAJO_UMBRAL = 3;

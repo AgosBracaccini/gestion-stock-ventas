@@ -1,5 +1,6 @@
 from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, parser_classes
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -35,6 +36,12 @@ from .services import (
     ingresar_mercaderia,
 )
 
+from .importar_excel import (
+    importar_precios_desde_excel,
+    importar_stock_desde_excel,
+    procesar_fila_precio,
+    procesar_fila_stock,
+)
 
 class ProveedorViewSet(viewsets.ModelViewSet):
     queryset = Proveedor.objects.all()
@@ -341,3 +348,51 @@ class CajaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(caja)
 
         return Response(serializer.data)
+
+
+@api_view(["POST"])
+@parser_classes([MultiPartParser])
+def importar_precios(request):
+    archivo = request.FILES.get("archivo")
+    if not archivo:
+        return Response(
+            {"detail": "No se envió ningún archivo."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    resultado = importar_precios_desde_excel(archivo)
+    return Response(resultado)
+
+
+@api_view(["POST"])
+@parser_classes([MultiPartParser])
+def importar_stock(request):
+    archivo = request.FILES.get("archivo")
+    if not archivo:
+        return Response(
+            {"detail": "No se envió ningún archivo."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    resultado = importar_stock_desde_excel(archivo)
+    return Response(resultado)
+
+
+@api_view(["POST"])
+def corregir_precio(request):
+    ok, mensaje, creado = procesar_fila_precio(request.data)
+
+    if not ok:
+        return Response({"detail": mensaje}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"creado": creado})
+
+
+@api_view(["POST"])
+def corregir_stock(request):
+    ok, mensaje, creado = procesar_fila_stock(request.data)
+
+    if not ok:
+        return Response({"detail": mensaje}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"creado": creado})
