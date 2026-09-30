@@ -1,5 +1,7 @@
 from rest_framework.routers import DefaultRouter
 
+from django.urls import path
+
 from .views import (
     ProveedorViewSet,
     ProductoViewSet,
@@ -9,6 +11,10 @@ from .views import (
     ConfiguracionTiendaViewSet,
     ConfiguracionEtiquetaViewSet,
     CajaViewSet,
+    importar_precios,
+    importar_stock,
+    corregir_precio,
+    corregir_stock,
 )
 
 router = DefaultRouter()
@@ -61,4 +67,9 @@ router.register(
     basename="caja",
 )
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path("importar/precios/", importar_precios, name="importar-precios"),
+    path("importar/stock/", importar_stock, name="importar-stock"),
+    path("importar/precios/fila/", corregir_precio, name="corregir-precio"),
+    path("importar/stock/fila/", corregir_stock, name="corregir-stock"),
+]
