@@ -1,6 +1,9 @@
-
-
-const rawBase = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://127.0.0.1:8000";
+// Si VITE_API_URL no está definida, el backend se busca en el mismo equipo desde
+// el que se abrió la app (puerto 8000). Así funciona igual entrando por
+// localhost que por la IP de la red, sin editar nada.
+const rawBase =
+  (import.meta.env["VITE_API_URL"] as string | undefined) ??
+  `${window.location.protocol}//${window.location.hostname}:8000`;
 
 export const API_URL = rawBase.replace(/\/+$/, "");
 
