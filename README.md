@@ -30,7 +30,11 @@ Desarrollar una aplicación web que permita centralizar la gestión de:
 - inventario;
 - movimientos de stock;
 - ingreso y reposición de mercadería;
-- ventas y sus detalles.
+- ventas y sus detalles;
+- personalización de la tienda (nombre y color);
+- diseño e impresión de etiquetas de precio;
+- cajas de depósito identificadas con códigos QR;
+- importación del catálogo y del stock desde los archivos Excel existentes.
 
 Al confirmar una venta, el sistema valida la disponibilidad, calcula los importes correspondientes, registra la operación, descuenta automáticamente el stock y genera el movimiento de inventario asociado.
 
@@ -101,6 +105,10 @@ El sistema utiliza las siguientes entidades principales:
 - Venta
 - DetalleVenta
 - ConfiguracionPrecios
+- ConfiguracionTienda
+- ConfiguracionEtiqueta
+- Caja
+- CajaItem
 
 ![Diagrama Entidad-Relación](docs/images/diagrama-er.png)
 
@@ -109,6 +117,13 @@ La separación entre `Producto` y `VarianteProducto` permite representar diferen
 La entidad `MovimientoStock` conserva el historial de las modificaciones del inventario, mientras que `stock_actual` permite consultar rápidamente la disponibilidad de cada variante.
 
 La entidad `ConfiguracionPrecios` centraliza los parámetros utilizados para calcular los precios correspondientes a los distintos medios de pago. Esto permite modificar las reglas comerciales desde el sistema sin necesidad de alterar el código fuente.
+
+Las entidades incorporadas en la segunda etapa son:
+
+- `ConfiguracionTienda`: nombre, color e intensidad de la tienda. Existe un único registro, que se aplica a toda la interfaz.
+- `ConfiguracionEtiqueta`: diseño de las etiquetas de precio (forma, tamaño, estilo, colores, tipografía, textos y posición). También existe un único registro.
+- `Caja`: unidad de almacenamiento del depósito, con un número automático, un nombre opcional y un código público aleatorio (UUID) que se utiliza en el QR.
+- `CajaItem`: contenido de una caja, formado por una variante de producto y una cantidad.
 
 ## Funcionalidades implementadas
 
@@ -205,6 +220,38 @@ Las transferencias se registran inicialmente como pendientes de verificación y 
 - Consulta de los datos asociados a ventas por transferencia.
 - Visualización del estado pendiente/verificado de las transferencias.
 - Verificación posterior de pagos realizados mediante transferencia.
+
+### Personalización de la tienda
+
+- Nombre de la tienda configurable, visible en toda la aplicación y en la pantalla de inicio de sesión.
+- Color a elegir entre seis opciones (rosa, celeste, verde, violeta, mostaza y gris) y tres intensidades (suave, medio y fuerte).
+- El color se aplica a toda la interfaz mediante variables CSS definidas en un único lugar.
+- La lectura de la configuración de la tienda es pública, para poder mostrar el nombre y el color antes de iniciar sesión.
+
+### Etiquetas de precio
+
+- Diseñador de etiquetas con vista previa en tiempo real: forma (rectangular, cuadrada o circular), tamaño en centímetros, estilo de borde, colores, degradé, tipografía, tamaño de los textos, subtítulo y posición del nombre de la tienda.
+- Generador de etiquetas por lote: se busca el producto por código, se elige la variante y la cantidad, y se arma una lista.
+- Impresión en hojas A4 aprovechando el espacio disponible, con la misma lógica de dibujo en la vista previa y en la impresión.
+- Permite reimprimir etiquetas que se despegan de las prendas, sin necesidad de ingresar mercadería nueva.
+
+### Cajas de depósito con QR
+
+- Alta de cajas con número automático y nombre opcional.
+- Carga del contenido de cada caja (variantes y cantidades), con validación contra el stock disponible.
+- Cada caja tiene un código público aleatorio (UUID) que no puede adivinarse a partir del número de la caja.
+- El QR se genera en el navegador y se imprime para pegarlo en la caja.
+- Al escanear el QR se accede a una página de solo lectura con el contenido de la caja, sin iniciar sesión y sin necesidad de abrirla.
+- El resto de las operaciones sobre cajas (listar, crear, eliminar) requieren autenticación.
+
+### Importación desde Excel
+
+- Importación del catálogo (hoja de precios): crea o actualiza productos y proveedores a partir de código, descripción, costo, costos extras y proveedor. Los precios no se importan porque el sistema los calcula a partir del costo.
+- Importación del stock (hoja `stock`): crea o actualiza las variantes a partir de código, color, talle y cantidad.
+- Los encabezados se interpretan sin distinguir mayúsculas ni tildes.
+- Las filas con errores no detienen la importación: se informan en pantalla y pueden corregirse a mano desde la misma página.
+- Si un código de stock no corresponde a un producto existente, se puede crear el producto completando prenda, costo y proveedor.
+- Pensada principalmente como carga inicial de los datos existentes.
 
 ### API y calidad
 
@@ -355,6 +402,18 @@ http://127.0.0.1:5173
 
 Esta configuración permite desarrollar frontend y backend de manera independiente manteniendo la API protegida.
 
+### Acceso desde otros dispositivos de la red local
+
+Para probar la aplicación desde otro dispositivo de la misma red (por ejemplo, escanear con un celular el QR de una caja), el backend debe iniciarse escuchando en todas las interfaces:
+
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+Luego se abre la aplicación desde el otro dispositivo usando la IP del equipo, por ejemplo `http://192.168.0.10:5173`.
+
+Mientras `DEBUG = True`, el backend acepta cualquier host y cualquier origen de la red local, y el frontend calcula solo la dirección del backend a partir de la dirección con la que se abrió. Esto no debe mantenerse en producción.
+
 ## Instalación local
 
 ### 1. Clonar el repositorio
@@ -413,7 +472,7 @@ Este usuario puede utilizarse para acceder a Django Admin y autenticarse inicial
 Desde la carpeta `backend`:
 
 ```bash
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 ```
 
 El backend estará disponible en:
@@ -436,9 +495,12 @@ npm install
 Crear un archivo `.env` dentro de `frontend`:
 
 ```env
-VITE_API_URL=http://127.0.0.1:8000
+# Opcional: si se omite, se usa el mismo equipo desde el que se abrió la app (puerto 8000)
+# VITE_API_URL=http://127.0.0.1:8000
 VITE_FAST_CRED_URL=https://ventapp.fastcred.ar/login
 VITE_FINAN_YA_URL=https://clientes.finanya.com.ar:9634/index.php
+
+```
 
 ### 10. Ejecutar el frontend
 
@@ -524,6 +586,21 @@ React + TypeScript + Vite
 Django REST Framework
         ↓
     PostgreSQL
+
+Segunda etapa
+
+Sobre la V1 se incorporaron cuatro módulos, desarrollados cada uno en su propia rama y fusionados mediante pull request:
+
+personalización de la tienda;
+etiquetas de precio;
+cajas de depósito con QR;
+importación desde Excel.
+Limitaciones conocidas y trabajo futuro
+Dirección de los QR: el QR contiene la dirección desde la que se abrió la aplicación. En una red local con IP dinámica, un QR impreso deja de funcionar si cambia la IP del equipo. Soluciones posibles: reservar una IP fija en el router o publicar el sistema con un dominio propio.
+HTTPS y configuración de producción: el desarrollo se realiza sobre HTTP. Para producción es necesario usar HTTPS, desactivar DEBUG, restringir ALLOWED_HOSTS y los orígenes CORS, y mover SECRET_KEY a una variable de entorno.
+Pruebas automatizadas: los módulos de la segunda etapa se probaron manualmente. Las pruebas automatizadas actuales cubren las reglas de inventario y ventas de la V1.
+Historial de ventas en Excel: no se importa. La importación contempla solo el catálogo y el stock.
+
 ```
 
 ## Autor
