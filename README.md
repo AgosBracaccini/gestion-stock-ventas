@@ -319,6 +319,8 @@ Precio Fast Cred = Precio efectivo
 Precio Finan Ya = Precio efectivo + 5 %
 ```
 
+El multiplicador, los descuentos por medio de pago y el recargo de Finan Ya no están fijos en el código: se administran desde la pantalla de **Configuración de precios** del sistema, y el backend los utiliza para calcular los precios de todos los productos.
+
 ## Autenticación
 
 La API utiliza autenticación mediante JSON Web Tokens (JWT).

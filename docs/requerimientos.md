@@ -426,6 +426,10 @@ Para cada caja deberá poder registrarse:
 
 El sistema deberá permitir listar, consultar, modificar y eliminar cajas.
 
+Al modificar el contenido de una caja (cambiar cantidades, quitar o agregar productos), su código público no deberá cambiar, de modo que el QR ya impreso y pegado siga funcionando.
+
+Una caja deberá conservar al menos un producto.
+
 El registro de una caja no deberá modificar el stock ni generar movimientos de stock, ya que la mercadería está contabilizada desde su ingreso.
 
 ---
