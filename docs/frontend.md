@@ -31,6 +31,7 @@ Las principales tecnologías utilizadas son:
 - TanStack React Query
 - Tailwind CSS
 - Lucide React
+- qrcode (generación de códigos QR en el navegador)
 
 ---
 
@@ -78,6 +79,7 @@ frontend/
 │   ├── hooks/
 │   ├── lib/
 │   ├── pages/
+│   ├── tienda/
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── styles.css
@@ -89,7 +91,9 @@ frontend/
 
 La capa `api` centraliza la comunicación con el backend y evita distribuir URLs y lógica HTTP entre los diferentes componentes.
 
-Los servicios se organizan según las funcionalidades principales del sistema, incluyendo productos, proveedores, ventas, movimientos y configuración de precios.
+Los servicios se organizan según las funcionalidades principales del sistema, incluyendo productos, proveedores, ventas, movimientos, configuración de precios, configuración de la tienda y de las etiquetas, cajas e importación desde Excel.
+
+La carpeta `lib` reúne utilidades compartidas, como el formato de importes y los estilos de las etiquetas y de la paleta de la tienda. La carpeta `tienda` contiene el proveedor que aplica la personalización de la tienda (nombre, color e intensidad) a toda la interfaz.
 
 ---
 
@@ -106,6 +110,8 @@ VITE_FINAN_YA_URL=https://clientes.finanya.com.ar:9634/index.php
 ```
 
 `VITE_API_URL` indica la dirección de la API desarrollada con Django.
+
+Esta variable es opcional. Si no se define, el frontend busca el backend en el mismo equipo desde el que se abrió la aplicación, en el puerto 8000. De esta forma la aplicación funciona igual al entrar por `localhost` que por la dirección IP del equipo en la red local, sin editar ninguna configuración. Esto permite abrirla desde un celular conectado a la misma red, por ejemplo al escanear el código QR de una caja.
 
 `VITE_FAST_CRED_URL` y `VITE_FINAN_YA_URL` permiten configurar las direcciones de las plataformas externas utilizadas durante el procesamiento de esos medios de pago.
 
@@ -440,6 +446,83 @@ Esto permite modificar las condiciones comerciales sin necesidad de alterar dire
 
 ---
 
+## Configuración de la tienda
+
+Permite personalizar el nombre de la tienda, el color principal (rosa, celeste, verde, violeta, mostaza o gris) y su intensidad (suave, medio o fuerte).
+
+Los cambios se aplican a toda la interfaz. El nombre se utiliza también en las etiquetas y en la pantalla de consulta de las cajas.
+
+---
+
+## Diseño de etiqueta
+
+Permite definir cómo se ven las etiquetas: forma, tamaño en centímetros, colores, estilo, tipografía, subtítulo y posición del nombre de la tienda.
+
+Muestra una vista previa que se actualiza a medida que se modifican las opciones. El diseño guardado se aplica a todas las etiquetas que se generen.
+
+---
+
+## Generar etiquetas
+
+Permite preparar las etiquetas a imprimir sin transcribir datos a mano.
+
+El usuario busca un producto por su código, elige la variante (talle), indica la cantidad de etiquetas y lo agrega a una lista. La pantalla muestra el total de etiquetas y una vista previa de la primera hoja.
+
+Al imprimir, las etiquetas se distribuyen en hojas A4 según el tamaño definido en el diseño. Cada etiqueta contiene el nombre de la tienda, el subtítulo si existe, el código del producto y el talle.
+
+La impresión se realiza mediante el navegador, de modo que el usuario puede usar cualquier impresora o enviar el archivo a una librería.
+
+---
+
+## Cajas
+
+Lista las cajas registradas en el depósito. Desde esta pantalla se puede crear una nueva caja o abrir el detalle de cada una.
+
+---
+
+## Nueva caja
+
+Permite registrar una caja y su contenido.
+
+El usuario puede ponerle un nombre y agregar productos: busca el producto por su código, elige la variante y la cantidad, y la agrega a la lista de contenido. Los productos pueden quitarse de la lista antes de guardar.
+
+Al guardar, el sistema crea la caja, le asigna su número y genera el código QR.
+
+---
+
+## Detalle de una caja
+
+Muestra el contenido registrado de la caja y su código QR.
+
+Desde esta pantalla se puede imprimir el QR para pegarlo en la caja y eliminar la caja, previa confirmación.
+
+El QR se genera en el navegador a partir de la dirección desde la que se abrió la aplicación y del código público de la caja.
+
+---
+
+## Consulta pública de una caja
+
+Es la pantalla que se abre al escanear el QR de una caja con la cámara del celular.
+
+Muestra el contenido registrado (artículos, talles y cantidades). Está pensada para usarse desde un celular, no requiere iniciar sesión y es de solo lectura.
+
+Utiliza el nombre y el color de la tienda.
+
+---
+
+## Importar desde Excel
+
+Permite cargar el catálogo y el stock desde los archivos Excel que la tienda ya utiliza.
+
+La importación se realiza en dos pasos, que deben hacerse en este orden:
+
+1. **Importar precios y proveedores**: catálogo de productos con su costo y proveedor.
+2. **Importar stock**: variantes (color y talle) con sus cantidades.
+
+Al terminar cada importación, la pantalla informa el resultado y lista las filas que tuvieron errores, con el motivo. Cada fila con error puede corregirse y guardarse desde la propia pantalla, sin volver a cargar el archivo.
+
+---
+
 # Integración frontend/backend
 
 Los principales flujos integrados pueden representarse de la siguiente manera.
@@ -539,6 +622,51 @@ Consultas sobre ventas e inventario
   ↓
 Métricas
 ```
+## Cajas y código QR
+
+```text
+React
+  ↓
+Contenido de la caja (variante y cantidad)
+  ↓
+API REST
+  ↓
+Django
+  ↓
+Caja (con código público) + CajaItem
+```
+
+## Consulta pública de una caja
+
+```text
+Celular escanea el QR
+  ↓
+El navegador abre /cajas/publica/<código>
+  ↓
+React
+  ↓
+GET /api/cajas/publica/<código>/
+  ↓
+Django (sin autenticación)
+  ↓
+Contenido de la caja en formato JSON
+```
+
+## Importación desde Excel
+
+```text
+React
+  ↓
+Archivo .xlsx
+  ↓
+POST /api/importar/precios/  o  /api/importar/stock/
+  ↓
+Django (lectura con openpyxl)
+  ↓
+Filas procesadas y filas con error
+  ↓
+Corrección manual de cada fila con error
+```
 
 ---
 
@@ -598,6 +726,30 @@ PostgreSQL
 ```
 
 Esta separación facilita el mantenimiento y evolución del sistema.
+
+---
+
+## Personalización de la tienda aplicada a toda la interfaz
+
+El nombre, el color y la intensidad de la tienda se guardan en el backend y se aplican a toda la interfaz mediante un proveedor común.
+
+De esta manera, un cambio en la configuración se refleja en todas las pantallas, incluida la consulta pública de las cajas, sin modificar el código.
+
+---
+
+## Etiquetas y códigos QR generados en el navegador
+
+Las etiquetas se componen en el navegador a partir del producto, la variante y el diseño guardado, y los códigos QR se generan a partir de la dirección de la aplicación y el código de la caja.
+
+La impresión se delega al navegador. Se descartó controlar una impresora de forma directa, porque agregaría dependencia de drivers y de un dispositivo específico sin aportar un beneficio real: el usuario puede imprimir en la impresora que prefiera o enviar el archivo a una librería.
+
+---
+
+## Consulta pública de las cajas fuera del inicio de sesión
+
+La pantalla que se abre al escanear un QR se encuentra fuera de las rutas protegidas, porque quien escanea debe ver el contenido de forma inmediata desde su celular.
+
+Es de solo lectura y se accede mediante un código no adivinable. Todas las demás pantallas continúan requiriendo iniciar sesión.
 
 ---
 
