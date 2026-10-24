@@ -494,7 +494,11 @@ Al guardar, el sistema crea la caja, le asigna su número y genera el código QR
 
 Muestra el contenido registrado de la caja y su código QR.
 
-Desde esta pantalla se puede imprimir el QR para pegarlo en la caja y eliminar la caja, previa confirmación.
+Desde esta pantalla se puede imprimir el QR para pegarlo en la caja, editar su contenido y eliminar la caja, previa confirmación.
+
+Al editar, se carga la lista actual de productos y el usuario puede cambiar la cantidad de cada uno, quitar productos y agregar otros, igual que al crear la caja. Al guardar, el contenido se reemplaza por la nueva lista. La caja conserva su número y su código público, por lo que el QR ya impreso sigue funcionando.
+
+Una caja debe conservar al menos un producto. Si ya no tiene mercadería, corresponde eliminarla.
 
 El QR se genera en el navegador a partir de la dirección desde la que se abrió la aplicación y del código público de la caja.
 
