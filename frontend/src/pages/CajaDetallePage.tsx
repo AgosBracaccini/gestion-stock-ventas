@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Printer, Trash2 } from "lucide-react";
+import { Pencil, Plus, Printer, Trash2 } from "lucide-react";
 
 import { cajasService } from "../api/services/cajas.service";
 import { productosService } from "../api/services/productos.service";
-import type { CajaItemInput, Producto, VarianteProducto } from "../api/types";
+import type { Caja, CajaItemInput, Producto } from "../api/types";
 import { CodigoQR } from "../components/common/CodigoQR";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -17,32 +17,66 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 interface ItemCola {
   key: string;
-  producto: Producto;
-  variante: VarianteProducto;
+  varianteId: number;
+  codigo: string;
+  color: string;
+  talle: string;
   cantidad: number;
 }
 
-export function CajaDetallePage() {
+export function CajaDetallePage({ modo }: { modo?: "editar" }) {
   const { id } = useParams();
 
   if (!id) {
-    return <CajaNuevaVista />;
+    return <CajaFormulario />;
+  }
+
+  if (modo === "editar") {
+    return <CajaEditarVista id={Number(id)} />;
   }
 
   return <CajaVistaDetalle id={Number(id)} />;
 }
 
-function CajaNuevaVista() {
-  const navigate = useNavigate();
+function CajaEditarVista({ id }: { id: number }) {
+  const { data: caja, isLoading, error } = useQuery({
+    queryKey: ["caja", id],
+    queryFn: () => cajasService.obtener(id),
+    refetchOnMount: "always",
+  });
 
-  const [nombre, setNombre] = useState("");
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Cargando...</p>;
+  }
+
+  if (error || !caja) {
+    return <ErrorMessage error={error ?? new Error("No se encontró la caja.")} />;
+  }
+
+  return <CajaFormulario key={caja.id} cajaInicial={caja} />;
+}
+
+function CajaFormulario({ cajaInicial }: { cajaInicial?: Caja }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [nombre, setNombre] = useState(cajaInicial?.nombre ?? "");
   const [codigo, setCodigo] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [errorBusqueda, setErrorBusqueda] = useState<unknown>(null);
   const [producto, setProducto] = useState<Producto | null>(null);
   const [varianteId, setVarianteId] = useState("");
   const [cantidad, setCantidad] = useState(1);
-  const [cola, setCola] = useState<ItemCola[]>([]);
+  const [cola, setCola] = useState<ItemCola[]>(
+    (cajaInicial?.items ?? []).map((item) => ({
+      key: String(item.variante.id),
+      varianteId: item.variante.id,
+      codigo: item.variante.producto_codigo,
+      color: item.variante.color,
+      talle: item.variante.talle,
+      cantidad: item.cantidad,
+    })),
+  );
   const [errorCantidad, setErrorCantidad] = useState<string | null>(null);
 
   async function buscarProducto(event: React.FormEvent) {
@@ -76,7 +110,7 @@ function CajaNuevaVista() {
   const varianteSeleccionada =
     (producto?.variantes ?? []).find((v) => String(v.id) === varianteId) ?? null;
 
-  const keyActual = producto && varianteSeleccionada ? `${producto.id}-${varianteSeleccionada.id}` : null;
+  const keyActual = varianteSeleccionada ? String(varianteSeleccionada.id) : null;
   const cantidadEnCola = keyActual ? (cola.find((item) => item.key === keyActual)?.cantidad ?? 0) : 0;
   const stockDisponible = varianteSeleccionada ? varianteSeleccionada.stock_actual - cantidadEnCola : 0;
 
@@ -97,10 +131,25 @@ function CajaNuevaVista() {
         cola.map((item) => (item.key === keyActual ? { ...item, cantidad: item.cantidad + cantidad } : item)),
       );
     } else {
-      setCola([...cola, { key: keyActual, producto, variante: varianteSeleccionada, cantidad }]);
+      setCola([
+        ...cola,
+        {
+          key: keyActual,
+          varianteId: varianteSeleccionada.id,
+          codigo: producto.codigo,
+          color: varianteSeleccionada.color,
+          talle: varianteSeleccionada.talle,
+          cantidad,
+        },
+      ]);
     }
 
     setCantidad(1);
+  }
+
+  function cambiarCantidad(key: string, valor: number) {
+    const nueva = Math.max(1, Math.floor(valor) || 1);
+    setCola(cola.map((item) => (item.key === key ? { ...item, cantidad: nueva } : item)));
   }
 
   function quitarDeCola(key: string) {
@@ -110,12 +159,16 @@ function CajaNuevaVista() {
   const guardar = useMutation({
     mutationFn: () => {
       const items: CajaItemInput[] = cola.map((item) => ({
-        variante_id: item.variante.id,
+        variante_id: item.varianteId,
         cantidad: item.cantidad,
       }));
-      return cajasService.crear({ nombre: nombre.trim(), items });
+      const datos = { nombre: nombre.trim(), items };
+
+      return cajaInicial ? cajasService.actualizar(cajaInicial.id, datos) : cajasService.crear(datos);
     },
     onSuccess: (caja) => {
+      void queryClient.invalidateQueries({ queryKey: ["cajas"] });
+      void queryClient.invalidateQueries({ queryKey: ["caja", caja.id] });
       navigate(`/cajas/${caja.id}`);
     },
   });
@@ -123,8 +176,12 @@ function CajaNuevaVista() {
   return (
     <>
       <PageHeader
-        title="Nueva caja"
-        description="Cargá el contenido de la caja. Al guardar se genera el número y el QR."
+        title={cajaInicial ? `Editar caja #${cajaInicial.numero}` : "Nueva caja"}
+        description={
+          cajaInicial
+            ? "Modificá el contenido de la caja. El QR no cambia, así que el que ya está pegado sigue funcionando."
+            : "Cargá el contenido de la caja. Al guardar se genera el número y el QR."
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -227,17 +284,24 @@ function CajaNuevaVista() {
                 {cola.map((item) => (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
                   >
-                    <div className="text-sm">
-                      <p className="font-medium">
-                        {item.producto.codigo} · {item.variante.color} · {item.variante.talle}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Cantidad: {item.cantidad}</p>
+                    <p className="text-sm font-medium">
+                      {item.codigo} · {item.color} · {item.talle}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="1"
+                        className="w-20"
+                        aria-label="Cantidad"
+                        value={item.cantidad}
+                        onChange={(event) => cambiarCantidad(item.key, Number(event.target.value))}
+                      />
+                      <Button variant="ghost" size="icon" onClick={() => quitarDeCola(item.key)}>
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => quitarDeCola(item.key)}>
-                      <Trash2 className="size-4" />
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -251,7 +315,7 @@ function CajaNuevaVista() {
               disabled={cola.length === 0 || guardar.isPending}
               onClick={() => guardar.mutate()}
             >
-              {guardar.isPending ? "Guardando..." : "Guardar caja"}
+              {guardar.isPending ? "Guardando..." : cajaInicial ? "Guardar cambios" : "Guardar caja"}
             </Button>
           </CardContent>
         </Card>
@@ -294,6 +358,10 @@ function CajaVistaDetalle({ id }: { id: number }) {
         description="Contenido de la caja. Escaneá el QR para verlo sin abrirla."
         actions={
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate(`/cajas/${id}/editar`)}>
+              <Pencil className="size-4" />
+              Editar
+            </Button>
             <Button variant="outline" onClick={() => window.print()}>
               <Printer className="size-4" />
               Imprimir
