@@ -111,7 +111,9 @@ export function App() {
 
                   <Route path="/cajas/nueva" element={<CajaDetallePage />} />
 
-                  <Route path="/cajas/:id" element={<CajaDetallePage />} />
+<Route path="/cajas/:id" element={<CajaDetallePage />} />
+
+                  <Route path="/cajas/:id/editar" element={<CajaDetallePage modo="editar" />} />
 
                   <Route path="/importar-excel" element={<ImportarExcelPage />} />
                 </Route>
