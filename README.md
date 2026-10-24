@@ -543,16 +543,20 @@ gestion-stock-ventas/
 │   │   ├── api/
 │   │   ├── auth/
 │   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── lib/
 │   │   ├── pages/
+│   │   ├── tienda/
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   └── package.json
 │
 ├── docs/
 │   ├── images/
+│   ├── arquitectura.md
 │   ├── as-is.md
+│   ├── frontend.md
 │   ├── modelo-datos.md
-|   ├── frontend.md
 │   └── requerimientos.md
 │
 ├── .env.example
@@ -566,9 +570,11 @@ En la carpeta [`docs`](docs/) se encuentra documentación relacionada con:
 
 - análisis de la situación inicial (AS-IS);
 - requerimientos del sistema;
-- modelo de datos;
+- modelo de datos, con su diagrama entidad-relación;
 - decisiones de diseño;
-- arquitectura e integración del sistema.
+- arquitectura del sistema y comunicación entre dispositivos;
+- proceso de registro y consulta de cajas de depósito;
+- documentación del frontend.
 
 ## Estado del proyecto
 
