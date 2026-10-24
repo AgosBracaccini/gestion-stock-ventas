@@ -29,7 +29,19 @@ La primera versión del sistema contempla la gestión de:
 - Interfaz web para la operación del sistema
 - Dashboard con información de ventas e inventario
 
-En versiones posteriores podrán incorporarse reportes avanzados, indicadores comerciales adicionales, roles específicos, exportación de información y configuraciones avanzadas.
+## Alcance de la segunda etapa
+
+Sobre la primera versión se incorporaron los siguientes módulos:
+
+- Personalización de la tienda
+- Diseño de las etiquetas de precio
+- Generación e impresión de etiquetas
+- Cajas de depósito con su contenido
+- Código QR por caja y consulta pública desde el celular
+- Importación de catálogo y stock desde archivos Excel
+- Corrección manual de las filas que no pudieron importarse
+
+Quedan para versiones posteriores los reportes avanzados, los indicadores comerciales adicionales, los roles específicos, la exportación de información y las configuraciones avanzadas.
 
 ---
 
@@ -349,6 +361,112 @@ El registro definitivo de la venta continuará siendo responsabilidad del backen
 
 ---
 
+## RF-20 - Personalización de la tienda
+
+El sistema deberá permitir configurar:
+
+- el nombre de la tienda;
+- un color principal, a elegir entre rosa, celeste, verde, violeta, mostaza y gris;
+- la intensidad del color: suave, medio o fuerte.
+
+La configuración deberá aplicarse a la interfaz de la aplicación.
+
+El nombre de la tienda deberá utilizarse en la interfaz y en las etiquetas generadas.
+
+La configuración deberá conservarse entre sesiones.
+
+---
+
+## RF-21 - Diseño de las etiquetas
+
+El sistema deberá permitir definir el diseño de las etiquetas de la mercadería, indicando:
+
+- la forma: rectangular, cuadrada o circular;
+- las dimensiones en centímetros;
+- los colores de fondo (con la posibilidad de un degradé), de texto, del nombre de la tienda y de los recuadros;
+- un subtítulo opcional;
+- el estilo: simple, con borde, bordes suaves, relleno sólido o marco doble;
+- la fuente y el tamaño de las letras;
+- la posición del nombre de la tienda dentro de la etiqueta.
+
+El sistema deberá validar que los valores ingresados sean válidos.
+
+El diseño definido deberá aplicarse a todas las etiquetas que se generen.
+
+---
+
+## RF-22 - Generación e impresión de etiquetas
+
+El sistema deberá permitir generar etiquetas a partir de los productos cargados, sin necesidad de transcribir sus datos manualmente.
+
+El usuario deberá poder:
+
+- buscar un producto por su código;
+- seleccionar su variante (talle);
+- indicar la cantidad de etiquetas necesarias;
+- agregar el producto a una lista de impresión y quitarlo si es necesario.
+
+El sistema deberá mostrar una vista previa de las etiquetas y distribuirlas en hojas listas para imprimir.
+
+Cada etiqueta deberá contener el nombre de la tienda, el subtítulo si fue definido, el código del producto y el talle.
+
+La impresión se realizará mediante el navegador, desde cualquier impresora disponible o enviando el archivo a una librería. El sistema no controla la impresora de forma directa.
+
+---
+
+## RF-23 - Cajas de depósito
+
+El sistema deberá permitir registrar las cajas del depósito y su contenido.
+
+Para cada caja deberá poder registrarse:
+
+- un nombre opcional;
+- las variantes de producto que contiene;
+- la cantidad de cada una, que deberá ser al menos 1.
+
+El sistema deberá permitir listar, consultar, modificar y eliminar cajas.
+
+El registro de una caja no deberá modificar el stock ni generar movimientos de stock, ya que la mercadería está contabilizada desde su ingreso.
+
+---
+
+## RF-24 - Código QR y consulta pública de una caja
+
+El sistema deberá asignar a cada caja un código público único, que no pueda adivinarse.
+
+El sistema deberá generar un código QR a partir de ese código, para poder imprimirlo y pegarlo en la caja.
+
+Al escanear el QR con la cámara de un celular, deberá abrirse una página que muestre el contenido registrado de la caja (artículos, talles y cantidades), sin necesidad de abrirla físicamente.
+
+Esta consulta no requerirá iniciar sesión y será de solo lectura.
+
+---
+
+## RF-25 - Importación desde Excel
+
+El sistema deberá permitir cargar la información existente en archivos Excel, mediante dos importaciones:
+
+- **Catálogo y precios**: código, descripción, costo, costo extra y proveedor.
+- **Stock**: código, color, talle y cantidad.
+
+La importación del catálogo deberá crear los productos que no existan y actualizar los existentes. Los proveedores que no existan deberán crearse.
+
+La importación del stock deberá crear o actualizar las variantes. Si el código no corresponde a un producto existente y la fila incluye prenda, costo y proveedor, el producto deberá crearse, ya que puede tratarse de mercadería nueva.
+
+Al finalizar, el sistema deberá informar cuántas filas se procesaron y cuáles presentaron errores, indicando el motivo.
+
+Un error en una fila no deberá impedir la importación de las demás.
+
+---
+
+## RF-26 - Corrección manual de filas con error
+
+Las filas que no pudieron importarse deberán poder corregirse desde la pantalla de importación, completando o modificando sus datos.
+
+La corrección manual deberá aplicar las mismas validaciones que la importación desde el archivo.
+
+---
+
 # Requerimientos no funcionales
 
 ## RNF-01 - Persistencia
@@ -447,6 +565,24 @@ Los parámetros correspondientes a las reglas comerciales de cálculo de precios
 El frontend deberá permitir generar correctamente una versión de producción mediante su proceso de build.
 
 La existencia de errores de compilación deberá impedir considerar válida una versión para despliegue.
+
+---
+
+## RNF-12 - Acceso desde otros dispositivos de la red local
+
+El sistema deberá poder utilizarse desde distintos dispositivos (celular, computadora o notebook) conectados a la misma red local que el servidor, mediante un navegador web y sin instalar aplicaciones adicionales.
+
+El frontend deberá detectar automáticamente la dirección del backend a partir del equipo desde el que se abrió la aplicación, de modo que funcione tanto desde ese equipo como desde otro dispositivo de la red.
+
+La apertura del acceso desde otros dispositivos se realiza únicamente en el entorno de desarrollo. En un entorno de producción deberán restringirse los orígenes y los equipos permitidos.
+
+---
+
+## RNF-13 - Seguridad de la consulta pública
+
+La consulta pública del contenido de una caja deberá identificarse mediante un código no adivinable, de modo que no sea posible recorrer las cajas por numeración.
+
+La consulta pública deberá ser de solo lectura. Todas las demás operaciones del sistema deberán requerir autenticación.
 
 ---
 
