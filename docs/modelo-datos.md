@@ -4,9 +4,11 @@
 
 El modelo de datos fue diseñado a partir del relevamiento del proceso actual de gestión de ventas e inventario.
 
-El objetivo es representar de forma estructurada los productos, sus diferentes variantes, las existencias disponibles, los movimientos de inventario, las operaciones de venta y la configuración utilizada para el cálculo de precios.
+El objetivo es representar de forma estructurada los productos, sus diferentes variantes, las existencias disponibles, los movimientos de inventario, las operaciones de venta, la configuración utilizada para el cálculo de precios, la personalización de la tienda y de las etiquetas, y las cajas de depósito con su contenido.
 
-Se identificaron siete entidades principales:
+Se identificaron once entidades principales, agrupadas en tres áreas.
+
+Catálogo, inventario y ventas:
 
 - Proveedor
 - Producto
@@ -14,7 +16,17 @@ Se identificaron siete entidades principales:
 - MovimientoStock
 - Venta
 - DetalleVenta
+
+Configuración del sistema:
+
 - ConfiguracionPrecios
+- ConfiguracionTienda
+- ConfiguracionEtiqueta
+
+Depósito:
+
+- Caja
+- CajaItem
 
 ---
 
@@ -22,7 +34,7 @@ Se identificaron siete entidades principales:
 
 ![Diagrama Entidad-Relación](images/diagrama-er.png)
 
-> El diagrama deberá mantenerse actualizado respecto del modelo implementado, incluyendo la configuración de precios y los campos asociados a la verificación de transferencias.
+> El diagrama representa las once entidades del modelo implementado, incluyendo las configuraciones del sistema y las cajas de depósito con su contenido.
 
 ---
 
@@ -239,6 +251,102 @@ De esta manera, los productos conservan sus propios valores de costo y costo ext
 ---
 
 # Decisiones de diseño
+
+## ConfiguracionTienda
+
+Representa la personalización visual de la aplicación para la tienda.
+
+Contiene:
+
+- Nombre de la tienda
+- Color principal (rosa, celeste, verde, violeta, mostaza o gris)
+- Intensidad del color (suave, medio o fuerte)
+- Fecha de última actualización
+
+Al igual que `ConfiguracionPrecios`, es una configuración general: existe un único registro, que se crea automáticamente la primera vez que se consulta, y no se relaciona mediante clave foránea con otras entidades.
+
+El nombre de la tienda se utiliza en la interfaz y en las etiquetas de precio.
+
+---
+
+## ConfiguracionEtiqueta
+
+Representa los parámetros de diseño de las etiquetas de precio que el sistema genera para imprimir.
+
+Contiene:
+
+- Forma (rectangular, cuadrada o circular)
+- Dimensiones en centímetros (ancho y alto; en la forma circular el ancho se usa como diámetro)
+- Colores de fondo (con un segundo color para degradé), de texto, de nombre de la tienda y de los recuadros
+- Subtítulo opcional
+- Estilo (simple, con borde, bordes suaves, relleno sólido o marco doble)
+- Fuente y tamaños de letra, expresados en puntos para lograr una impresión consistente
+- Posición del nombre de la tienda dentro de la etiqueta
+
+También es una configuración general con un único registro.
+
+Las etiquetas generadas no se almacenan en la base de datos: se componen a partir del producto, su variante y esta configuración, y se envían a imprimir. De esta manera, el diseño se define una vez y se aplica a todos los lotes de etiquetas.
+
+---
+
+## Caja
+
+Representa una unidad de almacenamiento del depósito, como las cajas donde se guarda la mercadería que no se exhibe en el local.
+
+Contiene:
+
+- Código público (UUID)
+- Nombre opcional
+- Fecha de creación
+
+El código público es un identificador único generado automáticamente, que no puede editarse. Es el dato que se incluye en el código QR impreso y pegado en la caja.
+
+Se utiliza un UUID y no el identificador numérico de la caja porque la consulta mediante QR no requiere iniciar sesión. Un número secuencial permitiría recorrer fácilmente todas las cajas; un UUID no es adivinable.
+
+Relación:
+
+```text
+Caja 1:N CajaItem
+```
+
+---
+
+## CajaItem
+
+Representa el registro del contenido de una caja: cada línea indica qué variante de producto contiene y en qué cantidad.
+
+Contiene:
+
+- Caja
+- Variante del producto
+- Cantidad
+
+Ejemplo:
+
+```text
+Caja: "Remeras verano"
+
+Contenido:
+- 8019 / Azul / 38  x 4
+- 8019 / Negro / 40 x 2
+- 7312 / Blanco / M x 6
+```
+
+Relaciones:
+
+```text
+Caja 1:N CajaItem
+
+VarianteProducto 1:N CajaItem
+```
+
+La relación se realiza con `VarianteProducto` y no con `Producto`, porque para ubicar una prenda se necesita conocer la combinación exacta de color y talle.
+
+La cantidad debe ser al menos 1.
+
+Si se elimina una caja, se eliminan sus registros de contenido. En cambio, una variante que figura en una caja no puede eliminarse, para no dejar registros de contenido apuntando a un producto inexistente.
+
+---
 
 ## Separación entre Producto y VarianteProducto
 
@@ -479,6 +587,67 @@ Las ventas y sus detalles constituyen información histórica de las operaciones
 
 ## Relación con el frontend
 
+## Cajas de depósito y consulta mediante QR
+
+La mercadería que no se exhibe en el local se guarda en cajas. Para saber qué contiene cada una sin abrirla, el sistema registra su contenido y genera un código QR.
+
+El proceso es el siguiente:
+
+```text
+Un empleado arma la caja
+        ↓
+Registra en el sistema qué variantes y cantidades contiene
+        ↓
+El sistema genera el código público (UUID) de la caja
+        ↓
+Se imprime el QR y se pega en la caja
+        ↓
+Otro empleado escanea el QR con la cámara del celular
+        ↓
+El celular consulta al sistema y muestra el contenido registrado
+```
+
+El QR contiene la dirección de la página pública de la caja, formada por la dirección desde la que se abrió la aplicación y el código público de la caja.
+
+La consulta pública es la única operación del módulo que no requiere iniciar sesión, porque quien escanea el QR debe poder ver el contenido de forma inmediata. Crear, listar, editar y eliminar cajas requiere sesión iniciada.
+
+Una caja es un **registro de ubicación**, no una modificación del inventario: crear o editar una caja no genera movimientos de stock ni modifica `stock_actual`. La mercadería ya figura como stock desde su ingreso; la caja solo indica dónde está guardada.
+
+Por este motivo, el contenido de una caja refleja lo que se registró al cargarla o editarla. Las ventas no lo actualizan automáticamente, por lo que debe modificarse manualmente cuando se retira mercadería de la caja.
+
+---
+
+## Importación desde Excel
+
+La tienda contaba con su información en planillas de cálculo independientes. Para evitar volver a cargar manualmente todo el catálogo y el stock, el sistema permite importar esos datos desde archivos Excel.
+
+La importación **no agrega entidades nuevas**: trabaja sobre `Proveedor`, `Producto` y `VarianteProducto`.
+
+Se realiza en dos cargas que deben hacerse en este orden:
+
+1. **Catálogo y precios**: código, descripción, costo, costo extra y proveedor.
+2. **Stock**: código, color, talle y cantidad.
+
+En la carga de catálogo, el producto se identifica por su código: si existe, se actualiza; si no existe, se crea. El proveedor se busca por nombre sin distinguir mayúsculas y se crea si no existe.
+
+En la carga de stock, la variante se identifica por producto, color y talle. Si el código no corresponde a un producto existente, pero la fila incluye prenda, costo y proveedor, el producto se crea en ese momento, porque puede tratarse de mercadería nueva.
+
+Las filas con errores no detienen la importación: se informan junto con el motivo y pueden corregirse manualmente desde la pantalla de importación. Tanto la importación como la corrección manual utilizan las mismas reglas de validación.
+
+Por tratarse de una **carga inicial**, la importación de stock se diferencia del ingreso de mercadería:
+
+```text
+Ingreso de mercadería
+    → suma la cantidad al stock existente
+    → registra un movimiento ENTRADA
+
+Importación de stock
+    → establece el stock de la variante con la cantidad del archivo
+    → no registra movimientos
+```
+
+---
+
 El modelo de datos pertenece al backend y constituye la fuente de verdad del sistema.
 
 El frontend desarrollado con React no mantiene una base de datos independiente ni modifica directamente la persistencia.
@@ -571,6 +740,16 @@ ConfiguracionPrecios
             de precios del backend
 ```
 
-`ConfiguracionPrecios` funciona como una configuración general del sistema y no requiere una relación mediante clave foránea con las restantes entidades.
+`ConfiguracionPrecios`, `ConfiguracionTienda` y `ConfiguracionEtiqueta` funcionan como configuraciones generales del sistema: cada una tiene un único registro y no requiere una relación mediante clave foránea con las restantes entidades.
+
+Las cajas de depósito se vinculan con el catálogo a través de `CajaItem`:
+
+```text
+Caja
+  │
+  │ 1:N
+  ↓
+CajaItem ────── N:1 ──────> VarianteProducto
+```
 
 El modelo permite mantener separadas las responsabilidades relacionadas con catálogo, inventario, ventas, trazabilidad y configuración comercial.
