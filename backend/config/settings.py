@@ -24,15 +24,22 @@ load_dotenv(BASE_DIR.parent / ".env")
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=+dxabit@-*vwjf1z_345mtoxt*7vikcwpz(vrin(a04*crom('
+# La clave y el modo de depuración se leen del archivo .env (que no se sube al
+# repositorio). Si no están definidos, se usa el modo seguro (DEBUG apagado).
+SECRET_KEY = os.getenv("SECRET_KEY", "clave-solo-para-desarrollo-no-usar-en-produccion")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+if not DEBUG and SECRET_KEY.startswith("clave-solo-para-desarrollo"):
+    raise RuntimeError("Con DEBUG=False hay que definir SECRET_KEY en el archivo .env")
 
 # En desarrollo (DEBUG = True) se aceptan todos los hosts, así no hay que tocar
-# esto cada vez que cambia la IP de la compu. En producción hay que listarlos.
-ALLOWED_HOSTS = ["*"] if DEBUG else []
-
+# esto cada vez que cambia la IP de la compu. En producción se listan en
+# ALLOWED_HOSTS (variable del .env, separados por coma).
+ALLOWED_HOSTS = ["*"] if DEBUG else [
+    h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()
+]
 
 # Application definition
 
@@ -119,9 +126,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-ar'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
 
 USE_I18N = True
 
@@ -168,12 +175,11 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
 }
 
+# Orígenes permitidos (variable CORS_ORIGINS del .env, separados por coma).
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8080",
-    "http://192.168.1.59:8080",
-    "http://192.168.0.121:5173",
+    o.strip() for o in os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",") if o.strip()
 ]
 
 # Solo en desarrollo: se acepta cualquier origen de la red local.
