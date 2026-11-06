@@ -4,16 +4,15 @@ from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
+from rest_framework_simplejwt.views import TokenRefreshView
+
+from .auth_views import LoginView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
     "api/token/",
-    TokenObtainPairView.as_view(),
+    LoginView.as_view(),
     name="token_obtain_pair",
     ),
     path(
