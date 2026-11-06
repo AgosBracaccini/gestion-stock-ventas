@@ -29,6 +29,17 @@ from openpyxl import load_workbook
 
 from .models import Producto, Proveedor, VarianteProducto
 
+TAMANO_MAXIMO_EXCEL = 5 * 1024 * 1024  # 5 MB
+
+
+def validar_archivo_excel(archivo):
+    """Devuelve un mensaje de error si el archivo no sirve, o None si está bien."""
+    if not archivo.name.lower().endswith(".xlsx"):
+        return "El archivo debe ser un Excel en formato .xlsx."
+    if archivo.size > TAMANO_MAXIMO_EXCEL:
+        return "El archivo es demasiado grande (máximo 5 MB)."
+    return None
+
 
 def _normalizar(texto):
     """Mayúsculas, sin tildes y sin espacios repetidos, para comparar encabezados."""

@@ -133,7 +133,7 @@ function BloqueImportacion({
 
         <input
           type="file"
-          accept=".xlsx,.xls"
+          accept=".xlsx"
           onChange={(event) => setArchivo(event.target.files?.[0] ?? null)}
           className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
         />

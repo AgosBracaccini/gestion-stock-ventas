@@ -143,6 +143,54 @@ class AutenticacionAPITest(APITestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
 
+class ImportacionArchivoTest(APITestCase):
+
+    def setUp(self):
+        usuario = User.objects.create_user(
+            username="importador", password="clave_test_123"
+        )
+        self.client.force_authenticate(user=usuario)
+
+    def _subir(self, url, nombre, contenido):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        archivo = SimpleUploadedFile(nombre, contenido)
+        return self.client.post(url, {"archivo": archivo}, format="multipart")
+
+    def test_rechaza_archivo_que_no_es_xlsx(self):
+        respuesta = self._subir("/api/importar/precios/", "datos.xls", b"contenido")
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rechaza_xlsx_corrupto(self):
+        respuesta = self._subir(
+            "/api/importar/stock/", "datos.xlsx", b"esto no es un excel"
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rechaza_archivo_demasiado_grande(self):
+        grande = b"0" * (5 * 1024 * 1024 + 1)
+        respuesta = self._subir("/api/importar/precios/", "grande.xlsx", grande)
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_importa_precios_desde_xlsx_valido(self):
+        from io import BytesIO
+        from openpyxl import Workbook
+
+        libro = Workbook()
+        hoja = libro.active
+        hoja.append(["CODIGO", "DESCRIPCION", "COSTO", "PROVEEDOR"])
+        hoja.append(["T001", "Remera lisa", 5000, "Proveedor Test"])
+        buffer = BytesIO()
+        libro.save(buffer)
+
+        respuesta = self._subir(
+            "/api/importar/precios/", "precios.xlsx", buffer.getvalue()
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data["creados"], 1)
+        self.assertEqual(respuesta.data["errores"], [])
+
+
 class IngresoMercaderiaTest(TestCase):
 
     def setUp(self):

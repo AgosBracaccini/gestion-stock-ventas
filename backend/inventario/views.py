@@ -4,6 +4,8 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from openpyxl.utils.exceptions import InvalidFileException
+from zipfile import BadZipFile
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -37,6 +39,7 @@ from .services import (
 )
 
 from .importar_excel import (
+    validar_archivo_excel,
     importar_precios_desde_excel,
     importar_stock_desde_excel,
     procesar_fila_precio,
@@ -360,7 +363,17 @@ def importar_precios(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    resultado = importar_precios_desde_excel(archivo)
+    error = validar_archivo_excel(archivo)
+    if error:
+        return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        resultado = importar_precios_desde_excel(archivo)
+    except (BadZipFile, InvalidFileException, KeyError):
+        return Response(
+            {"detail": "No se pudo leer el archivo. Verificá que sea un Excel .xlsx válido."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     return Response(resultado)
 
 
@@ -374,7 +387,17 @@ def importar_stock(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    resultado = importar_stock_desde_excel(archivo)
+    error = validar_archivo_excel(archivo)
+    if error:
+        return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        resultado = importar_stock_desde_excel(archivo)
+    except (BadZipFile, InvalidFileException, KeyError):
+        return Response(
+            {"detail": "No se pudo leer el archivo. Verificá que sea un Excel .xlsx válido."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     return Response(resultado)
 
 
