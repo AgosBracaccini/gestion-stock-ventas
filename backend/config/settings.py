@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 
@@ -164,6 +165,19 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+
+    # Límite de intentos de inicio de sesión (por IP).
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "5/min",
+    },
+}
+
+# Duración de las sesiones: el acceso dura poco y se renueva solo con el
+# refresh, que cubre una jornada de trabajo. Pasado ese tiempo hay que
+# volver a iniciar sesión.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
 SPECTACULAR_SETTINGS = {

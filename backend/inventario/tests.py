@@ -121,6 +121,28 @@ class AutenticacionAPITest(APITestCase):
             status.HTTP_200_OK
         )
 
+    def test_login_se_bloquea_tras_demasiados_intentos(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+        for _ in range(5):
+            respuesta = self.client.post(
+                "/api/token/",
+                {"username": "usuario_test", "password": "incorrecta"},
+                format="json",
+            )
+            self.assertEqual(respuesta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        respuesta = self.client.post(
+            "/api/token/",
+            {"username": "usuario_test", "password": "incorrecta"},
+            format="json",
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+
 class IngresoMercaderiaTest(TestCase):
 
     def setUp(self):
