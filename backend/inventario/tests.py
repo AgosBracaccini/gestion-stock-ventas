@@ -191,6 +191,67 @@ class ImportacionArchivoTest(APITestCase):
         self.assertEqual(respuesta.data["errores"], [])
 
 
+class EndpointsPublicosTest(APITestCase):
+
+    def setUp(self):
+        from inventario.models import (
+            Caja,
+            CajaItem,
+            Producto,
+            Proveedor,
+            VarianteProducto,
+        )
+
+        proveedor = Proveedor.objects.create(nombre="Proveedor Test")
+        producto = Producto.objects.create(
+            codigo="X1",
+            prenda="Remera",
+            modelo="lisa",
+            descripcion="Remera lisa",
+            costo=1000,
+            proveedor=proveedor,
+        )
+        variante = VarianteProducto.objects.create(
+            producto=producto, color="Negro", talle="M", stock_actual=3
+        )
+        self.caja = Caja.objects.create(nombre="Caja test")
+        CajaItem.objects.create(caja=self.caja, variante=variante, cantidad=2)
+
+    def test_consulta_publica_de_caja_funciona_sin_login(self):
+        respuesta = self.client.get(
+            f"/api/cajas/publica/{self.caja.codigo_publico}/"
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data["items"][0]["cantidad"], 2)
+
+    def test_consulta_publica_no_expone_costos(self):
+        respuesta = self.client.get(
+            f"/api/cajas/publica/{self.caja.codigo_publico}/"
+        )
+        texto = str(respuesta.data).lower()
+        self.assertNotIn("costo", texto)
+        self.assertNotIn("precio", texto)
+
+    def test_codigo_con_formato_invalido_da_404(self):
+        respuesta = self.client.get("/api/cajas/publica/abc/")
+        self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_codigo_inexistente_da_404(self):
+        respuesta = self.client.get(
+            "/api/cajas/publica/00000000-0000-0000-0000-000000000000/"
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_listado_de_cajas_exige_login(self):
+        respuesta = self.client.get("/api/cajas/")
+        self.assertEqual(respuesta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_configuracion_de_tienda_publica_incluye_intensidad(self):
+        respuesta = self.client.get("/api/configuracion-tienda/")
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertIn("intensidad", respuesta.data)
+
+
 class IngresoMercaderiaTest(TestCase):
 
     def setUp(self):
