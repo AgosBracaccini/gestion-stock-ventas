@@ -3,6 +3,9 @@ from rest_framework.decorators import action, api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+import uuid
+
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from openpyxl.utils.exceptions import InvalidFileException
 from zipfile import BadZipFile
@@ -343,6 +346,13 @@ class CajaViewSet(viewsets.ModelViewSet):
         url_path="publica/(?P<codigo_publico>[^/.]+)",
     )
     def publica(self, request, codigo_publico=None):
+        # Si lo que llega no tiene formato de UUID, es un código inexistente
+        # (404) y no un error del servidor.
+        try:
+            uuid.UUID(str(codigo_publico))
+        except ValueError:
+            raise Http404
+
         caja = get_object_or_404(
             self.get_queryset(),
             codigo_publico=codigo_publico,

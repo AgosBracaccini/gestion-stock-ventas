@@ -212,7 +212,7 @@ class ConfiguracionPreciosSerializer(
 class ConfiguracionTiendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfiguracionTienda
-        fields = ["id", "nombre", "color", "actualizado"]
+        fields = ["id", "nombre", "color", "intensidad", "actualizado"]
         read_only_fields = ["id", "actualizado"]
 
     def validate_nombre(self, value):
