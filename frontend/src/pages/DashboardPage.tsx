@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../components/layout/PageHeader";
 import { productosService } from "../api/services/productos.service";
 import { ventasService } from "../api/services/ventas.service";
-import { formatMoney } from "../lib/format";
+import { formatCount, formatMoney } from "../lib/format";
 import { nivelStock } from "../components/common/StockBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -95,14 +95,14 @@ export function DashboardPage() {
         />
         <StatCard
           title="Stock bajo"
-          value={String(stockBajo)}
-          hint="Variantes con 3 unidades o menos"
+          value={formatCount(stockBajo)}
+          hint="Variantes con 1 a 3 unidades"
           icon={AlertTriangle}
           loading={isLoading}
         />
         <StatCard
           title="Sin stock"
-          value={String(sinStock)}
+          value={formatCount(sinStock)}
           hint="Variantes en cero"
           icon={PackageX}
           loading={isLoading}
