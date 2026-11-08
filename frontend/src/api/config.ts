@@ -23,6 +23,7 @@ export const ENDPOINTS = {
   cajas: "/api/cajas/",
   importarPrecios: "/api/importar/precios/",
   importarStock: "/api/importar/stock/",
+  importarVentas: "/api/importar/ventas/",
   corregirPrecio: "/api/importar/precios/fila/",
   corregirStock: "/api/importar/stock/fila/",
 } as const;

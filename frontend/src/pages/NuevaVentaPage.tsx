@@ -113,9 +113,9 @@ export function NuevaVentaPage() {
 
   const urlPagoExterno =
     medioPago === "FAST_CRED"
-      ? import.meta.env.VITE_FAST_CRED_URL
+      ? import.meta.env["VITE_FAST_CRED_URL"]
       : medioPago === "FINAN_YA"
-        ? import.meta.env.VITE_FINAN_YA_URL
+        ? import.meta.env["VITE_FINAN_YA_URL"]
         : null;
 
   const nombrePagoExterno =
