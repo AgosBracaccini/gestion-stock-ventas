@@ -228,3 +228,10 @@
     break-after: auto;
   }
 }
+
+
+/* Barra de desplazamiento del menú lateral: fina y del color del texto del menú. */
+[data-sidebar="content"] {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 40%, transparent) transparent;
+}

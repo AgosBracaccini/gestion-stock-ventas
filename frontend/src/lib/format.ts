@@ -19,3 +19,8 @@ export function formatDate(value: string | null | undefined): string {
     minute: "2-digit",
   }).format(date);
 }
+
+/** Número entero con separador de miles (2.804), incluso con 4 cifras. */
+export function formatCount(value: number): string {
+  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
