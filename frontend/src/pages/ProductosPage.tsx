@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { productosService } from "../api/services/productos.service";
 import { proveedoresService } from "../api/services/proveedores.service";
 import { ErrorMessage } from "../components/common/ErrorMessage";
-import { StockBadge } from "../components/common/StockBadge";
+import { StockBadge, nivelStock } from "../components/common/StockBadge";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
@@ -34,8 +34,8 @@ export function ProductosPage() {
   const [proveedor, setProveedor] = useState(TODOS);
   const [estado, setEstado] = useState(TODOS);
   const [color, setColor] = useState(TODOS);
-  const [talle, setTalle] = useState(TODOS);
-
+  const [talle, setTalle] = useState(TODOS);  
+  const [nivel, setNivel] = useState(TODOS);
   const { data: filas, isLoading, error } = useQuery({
     queryKey: ["stock-rows"],
     queryFn: () => productosService.stockRows(),
@@ -67,9 +67,10 @@ export function ProductosPage() {
         estado === TODOS || (estado === "activo" ? fila.activo : !fila.activo);
       const okColor = color === TODOS || fila.color === color;
       const okTalle = talle === TODOS || fila.talle === talle;
-      return coincide && okProveedor && okEstado && okColor && okTalle;
+      const okNivel = nivel === TODOS || nivelStock(fila.stock_actual) === nivel;
+      return coincide && okProveedor && okEstado && okColor && okTalle && okNivel;
     });
-  }, [filas, search, proveedor, estado, color, talle]);
+  }, [filas, search, proveedor, estado, color, talle, nivel]);
 
   return (
     <>
@@ -79,7 +80,22 @@ export function ProductosPage() {
       />
 
       <div className="surface-panel p-4">
-        <div className="grid gap-3 md:grid-cols-5">
+          <div>
+            <Label className="mb-1.5 block text-xs text-muted-foreground">Stock</Label>
+            <Select value={nivel} onValueChange={setNivel}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS}>Todos</SelectItem>
+                <SelectItem value="sin-stock">Sin stock</SelectItem>
+                <SelectItem value="bajo">Stock bajo</SelectItem>
+                <SelectItem value="normal">Disponible</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
           <div className="md:col-span-2">
             <Label className="mb-1.5 block text-xs text-muted-foreground">Buscar</Label>
             <div className="relative">
@@ -188,7 +204,10 @@ export function ProductosPage() {
                     </TableRow>
                   ))
                 : filtradas.map((fila) => (
-                    <TableRow key={fila.variante_id}>
+                    <TableRow
+                      key={fila.variante_id}
+                      className={fila.stock_actual <= 0 ? "bg-destructive/10 hover:bg-destructive/15" : undefined}
+                    >
                       <TableCell className="font-medium">{fila.codigo}</TableCell>
                       <TableCell>{fila.prenda}</TableCell>
                       <TableCell>{fila.modelo}</TableCell>
@@ -201,9 +220,7 @@ export function ProductosPage() {
                         <StockBadge stock={fila.stock_actual} />
                       </TableCell>
                       <TableCell>
-                        <Badge variant={fila.activo ? "secondary" : "outline"}>
-                          {fila.activo ? "Activo" : "Inactivo"}
-                        </Badge>
+                        {fila.activo ? null : <Badge variant="outline">Inactivo</Badge>}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1,4 +1,4 @@
-
+import { ordenarVariantes } from "../../lib/talles";
 import { ENDPOINTS } from "../config";
 import { apiRequest, toList } from "../http";
 import type {
@@ -11,7 +11,7 @@ import type {
 /** Aplana producto + variantes en filas para la tabla de stock. */
 export function flattenProductos(productos: Producto[]): FilaStock[] {
   return productos.flatMap((producto) =>
-    (producto.variantes ?? []).map((variante) => ({
+    ordenarVariantes(producto.variantes ?? []).map((variante) => ({
       variante_id: variante.id,
       producto_id: producto.id,
       codigo: producto.codigo,
