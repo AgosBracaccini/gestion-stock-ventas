@@ -16,7 +16,7 @@ export const FUENTES: { clave: FuenteEtiqueta; label: string; cssFontFamily: str
 ];
 
 export function fontFamilyDe(fuente: FuenteEtiqueta): string {
-  return FUENTES.find((f) => f.clave === fuente)?.cssFontFamily ?? FUENTES[2].cssFontFamily;
+  return FUENTES.find((f) => f.clave === fuente)?.cssFontFamily ?? "Arial, Helvetica, sans-serif";
 }
 
 export const ESTILOS: { clave: EstiloEtiqueta; label: string }[] = [

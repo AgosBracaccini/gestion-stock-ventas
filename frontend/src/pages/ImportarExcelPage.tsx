@@ -88,7 +88,7 @@ function BloqueImportacion({
   descripcion: string;
   campos: Campo[];
   onImportar: (archivo: File) => Promise<ResultadoImportacion>;
-  onCorregir: (datos: Record<string, unknown>) => Promise<{ creado: boolean }>;
+  onCorregir?: (datos: Record<string, unknown>) => Promise<{ creado: boolean }>;
 }) {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -150,6 +150,12 @@ function BloqueImportacion({
             <p className="text-sm">
               <span className="font-medium">{resultado.creados}</span> creados ·{" "}
               <span className="font-medium">{resultado.actualizados}</span> actualizados
+              {resultado.omitidas ? (
+                <>
+                  {" "}
+                  · <span className="font-medium">{resultado.omitidas}</span> ya existían (omitidas)
+                </>
+              ) : null}
               {resueltas > 0 ? (
                 <>
                   {" "}
@@ -161,18 +167,29 @@ function BloqueImportacion({
             {resultado.errores.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-destructive">
-                  {resultado.errores.length} fila{resultado.errores.length === 1 ? "" : "s"} con problemas —
-                  completá lo que falte y guardá cada una:
+                  {resultado.errores.length} fila{resultado.errores.length === 1 ? "" : "s"} con problemas —{" "}
+                  {onCorregir
+                    ? "completá lo que falte y guardá cada una:"
+                    : "corregí el Excel y volvé a importarlo (lo ya cargado se omite):"}
                 </p>
-                {resultado.errores.map((fila) => (
-                  <FilaCorregible
-                    key={fila.fila}
-                    fila={fila}
-                    campos={campos}
-                    onCorregir={onCorregir}
-                    onResuelta={() => marcarResuelta(fila.fila)}
-                  />
-                ))}
+                {resultado.errores.map((fila) =>
+                  onCorregir ? (
+                    <FilaCorregible
+                      key={fila.fila}
+                      fila={fila}
+                      campos={campos}
+                      onCorregir={onCorregir}
+                      onResuelta={() => marcarResuelta(fila.fila)}
+                    />
+                  ) : (
+                    <p
+                      key={fila.fila}
+                      className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm"
+                    >
+                      <span className="font-medium">Fila {fila.fila}:</span> {fila.mensaje}
+                    </p>
+                  ),
+                )}
               </div>
             ) : null}
           </div>
@@ -206,7 +223,7 @@ export function ImportarExcelPage() {
     <>
       <PageHeader
         title="Importar desde Excel"
-        description="Cargá el catálogo y el stock existentes desde los excels que ya usás, sin tener que tipearlo todo a mano."
+        description="Cargá el catálogo, el stock y las ventas existentes desde los excels que ya usás, sin tener que tipearlo todo a mano."
       />
 
       <div className="space-y-6">
@@ -224,6 +241,13 @@ export function ImportarExcelPage() {
           campos={CAMPOS_STOCK}
           onImportar={importarService.stock}
           onCorregir={importarService.corregirStock}
+        />
+
+        <BloqueImportacion
+          titulo="3. Importar ventas anteriores"
+          descripcion='Excel de ventas (hoja "VENTAS"): una fila por prenda vendida, con número de venta, fecha, medio de pago, código, color, talle, cantidad y precio. Carga el historial sin tocar el stock actual. Hacelo después de importar precios y stock. Si volvés a importar el mismo archivo, las ventas ya cargadas se omiten.'
+          campos={[]}
+          onImportar={importarService.ventas}
         />
       </div>
     </>

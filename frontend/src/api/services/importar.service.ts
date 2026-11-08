@@ -11,6 +11,7 @@ export interface FilaConError {
 export interface ResultadoImportacion {
   creados: number;
   actualizados: number;
+  omitidas?: number;
   errores: FilaConError[];
 }
 
@@ -40,6 +41,7 @@ async function subirArchivo(path: string, archivo: File): Promise<ResultadoImpor
 export const importarService = {
   precios: (archivo: File) => subirArchivo(ENDPOINTS.importarPrecios, archivo),
   stock: (archivo: File) => subirArchivo(ENDPOINTS.importarStock, archivo),
+  ventas: (archivo: File) => subirArchivo(ENDPOINTS.importarVentas, archivo),
 
   corregirPrecio: (datos: Record<string, unknown>) =>
     apiRequest<{ creado: boolean }>(ENDPOINTS.corregirPrecio, { method: "POST", body: datos }),
