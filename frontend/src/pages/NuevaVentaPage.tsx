@@ -42,6 +42,7 @@ import {
 
 import { formatMoney } from "../lib/format";
 import { precioPorMedioPago } from "../lib/precios";
+import { ordenarVariantes } from "../lib/talles";
 
 interface ItemVenta {
   variante: VarianteProducto;
@@ -94,8 +95,9 @@ export function NuevaVentaPage() {
     setPagoExternoConfirmado,
   ] = useState(false);
 
-  const variantes =
-    producto?.variantes ?? [];
+  const variantes = ordenarVariantes(
+    producto?.variantes ?? [],
+  );
 
   const varianteSeleccionada =
     variantes.find(
@@ -455,9 +457,7 @@ export function NuevaVentaPage() {
                                     stock={
                                       variante.stock_actual
                                     }
-                                    showLabel={
-                                      false
-                                    }
+                                    showLabel={true}
                                   />
 
                                   {yaAgregada(
@@ -944,9 +944,7 @@ export function NuevaVentaPage() {
               </p>
             ) : (
               <p className="text-center text-xs text-muted-foreground">
-                El descuento de stock y
-                el movimiento de venta
-                los realiza el backend.
+                Al confirmar, el stock se descuenta automáticamente.
               </p>
             )}
           </CardContent>
