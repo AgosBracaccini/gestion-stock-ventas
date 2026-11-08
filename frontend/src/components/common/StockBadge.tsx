@@ -10,9 +10,9 @@ export function nivelStock(stock: number): NivelStock {
 }
 
 const styles: Record<NivelStock, string> = {
-  "sin-stock": "bg-destructive/10 text-destructive border-destructive/20",
-  bajo: "bg-warning/15 text-warning-foreground border-warning/30",
-  normal: "bg-success/12 text-success-foreground border-success/25",
+  "sin-stock": "bg-destructive/20 text-destructive border-destructive/50",
+  bajo: "bg-warning/45 text-warning-foreground border-warning/70",
+  normal: "bg-success/30 text-success-foreground border-success/50",
 };
 
 const labels: Record<NivelStock, string> = {
@@ -26,7 +26,7 @@ export function StockBadge({ stock, showLabel = true }: { stock: number; showLab
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
         styles[nivel],
       )}
     >
