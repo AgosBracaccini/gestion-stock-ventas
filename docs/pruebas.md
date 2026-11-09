@@ -77,10 +77,36 @@ La columna **Resultado** indica el estado de cada caso:
 | PF-22 | Importar el archivo de stock después del de precios | Se crean las variantes y el stock queda cargado | Pendiente |
 | PF-23 | Importar un archivo con una fila con datos faltantes | La fila se informa con su motivo, las demás se importan, y la fila con error puede corregirse a mano | Pendiente |
 | PF-24 | Importar stock con un código que no existe, completando prenda, costo y proveedor | Se crea el producto nuevo junto con su variante | Pendiente |
+| PF-25 | Importar el stock: intentar ejecutar la importación | El sistema advierte que el stock actual se reemplaza y pide confirmación antes de ejecutar | Pendiente |
+| PF-26 | Importar el historial de ventas desde Excel | Se crean las ventas con su fecha y precio originales, sin modificar el stock ni generar movimientos | Pendiente |
+| PF-27 | Importar dos veces el mismo archivo de ventas | La segunda vez las ventas se omiten por duplicadas y no se crean registros repetidos | Pendiente |
+| PF-28 | Importar una venta por transferencia sin nombre, apellido o teléfono | La fila se informa con su motivo y las demás se importan | Pendiente |
+| PF-29 | Subir un archivo que no sea .xlsx o que supere los 5 MB | El sistema rechaza el archivo con un mensaje claro | Pendiente |
+
+## Datos y validaciones
+
+| N° | Caso de prueba | Resultado esperado | Resultado |
+| --- | --- | --- | --- |
+| PF-30 | Ingresar mercadería con el color "NEGRO" y luego con "negro" para el mismo producto y talle | Se usa una única variante, con el color "Negro" y el stock sumado | Pendiente |
+| PF-31 | Ingresar un talle en minúscula (por ejemplo "m") | Se guarda como "M" | Pendiente |
+| PF-32 | Crear un proveedor con un nombre que ya existe, cambiando mayúsculas o espacios | El sistema rechaza el duplicado con un mensaje claro | Pendiente |
+| PF-33 | Abrir Movimientos de stock | Cada movimiento muestra la prenda, el código, el color y el talle (no "Variante n") | Pendiente |
+| PF-34 | Cambiar el multiplicador en Configuración de precios | Se muestra la simulación del efecto y se pide confirmación antes de guardar | Pendiente |
+| PF-35 | Cambiar precios y abrir una venta anterior | La venta anterior conserva el precio al que se realizó | Pendiente |
+
+## Seguridad
+
+| N° | Caso de prueba | Resultado esperado | Resultado |
+| --- | --- | --- | --- |
+| PF-36 | Ingresar 6 veces seguidas una contraseña incorrecta en menos de un minuto | A partir del sexto intento el sistema bloquea temporalmente el acceso | Pendiente |
+| PF-37 | Abrir una pantalla protegida sin haber iniciado sesión | Redirige al login | Pendiente |
+| PF-38 | Abrir el QR de una caja desde el celular, sin sesión iniciada | Muestra el contenido de la caja en modo solo lectura | Pendiente |
+| PF-39 | Abrir una URL de caja con un código inventado | El sistema informa que la caja no existe, sin revelar datos | Pendiente |
+| PF-40 | Imprimir el QR de una caja desde una dirección localhost | El sistema advierte que el QR no funcionará desde un celular y pide confirmar | Pendiente |
 
 ## Pruebas automatizadas
 
-Además de las pruebas manuales, el backend cuenta con pruebas automatizadas que cubren las reglas de inventario y ventas. Se ejecutan con:
+Además de las pruebas manuales, el backend cuenta con pruebas automatizadas que cubren las reglas de inventario, ventas, cálculo de precios, normalización de colores y talles, proveedores, movimientos de stock, importación desde Excel y autenticación. Se ejecutan con:
 
 ```text
 python manage.py test
@@ -89,9 +115,21 @@ python manage.py test
 | Fecha | Resultado | Observaciones |
 | --- | --- | --- |
 | 23/10/2026 | OK | 20 pruebas ejecutadas en 5,3 segundos, sin errores. |
+| 09/11/2026 | OK | 68 pruebas ejecutadas en 41,5 segundos, sin errores. |
 
 ## Observaciones
 
 Los resultados de las pruebas, las fallas encontradas y su corrección se registran en esta sección.
 
-- Pendiente
+Fallas detectadas durante la revisión del sistema (octubre y noviembre de 2026) y su corrección:
+
+- Una misma variante podía duplicarse según se escribiera el color o el talle ("negro" y "Negro"). Se incorporó la normalización de colores y talles y una migración de datos que unificó los duplicados existentes.
+- Los movimientos de stock mostraban "Variante n" en lugar de la prenda. Se completó el serializador con descripción, código, color y talle.
+- Era posible crear proveedores con el mismo nombre, lo que podía hacer fallar las importaciones. Se agregó una validación que ignora mayúsculas y espacios.
+- La importación de stock reemplazaba cantidades sin advertirlo. Se agregó una advertencia con confirmación explícita.
+- El cambio de precios se guardaba sin mostrar su efecto. Se agregó una simulación con confirmación.
+- La hoja de impresión del QR de las cajas se veía descentrada y poco legible. Se rediseñó.
+- El QR podía generarse desde localhost, y entonces no abría desde un celular. Se agregó una advertencia al imprimir.
+- La vista previa de la etiqueta cambiaba de color de forma permanente sin haber guardado. Se restauró el color guardado al salir de la pantalla.
+
+Los resultados de los casos manuales (PF-01 a PF-40) se registran en la columna "Resultado" de cada tabla.
