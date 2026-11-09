@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Save } from "lucide-react";
+import { Check, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { configuracionTiendaService } from "../api/services/configuracion.service";
@@ -37,6 +37,26 @@ export function ConfiguracionTiendaPage() {
     setIntensidad(configuracion.intensidad);
   }, [configuracion]);
 
+  // Al salir de la pantalla sin guardar, se restaura el color guardado
+  // (la vista previa pinta toda la app y no debe quedarse puesta).
+  const guardadaRef = useRef(configuracion);
+  useEffect(() => {
+    guardadaRef.current = configuracion;
+  }, [configuracion]);
+
+  useEffect(() => {
+    return () => {
+      const guardada = guardadaRef.current;
+      if (guardada) aplicarColorTienda(guardada.color, guardada.intensidad);
+    };
+  }, []);
+
+  const hayCambios =
+    !!configuracion &&
+    (nombre.trim() !== configuracion.nombre ||
+      color !== configuracion.color ||
+      intensidad !== configuracion.intensidad);
+
   function seleccionarColor(clave: ColorTienda) {
     setColor(clave);
     aplicarColorTienda(clave, intensidad);
@@ -57,6 +77,14 @@ export function ConfiguracionTiendaPage() {
     aplicarColorTienda(color, intensidad);
   }
 
+  function descartarCambios() {
+    if (!configuracion) return;
+    setNombre(configuracion.nombre);
+    setColor(configuracion.color);
+    setIntensidad(configuracion.intensidad);
+    aplicarColorTienda(configuracion.color, configuracion.intensidad);
+  }
+
   const guardar = useMutation({
     mutationFn: () => {
       if (!configuracion) {
@@ -64,7 +92,7 @@ export function ConfiguracionTiendaPage() {
       }
 
       return configuracionTiendaService.actualizar(configuracion.id, {
-        nombre,
+        nombre: nombre.trim(),
         color,
         intensidad,
       });
@@ -124,6 +152,7 @@ export function ConfiguracionTiendaPage() {
                       <button
                         key={clave}
                         type="button"
+                        aria-pressed={seleccionado}
                         onClick={() => seleccionarColor(clave)}
                         onMouseEnter={() => previsualizarColor(clave)}
                         className={cn(
@@ -145,7 +174,7 @@ export function ConfiguracionTiendaPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Pasá el mouse por cada color para previsualizarlo en toda la app.
+                Tocá un color para verlo en toda la app. Se guarda recién cuando tocás Guardar.
               </p>
             </div>
 
@@ -160,6 +189,7 @@ export function ConfiguracionTiendaPage() {
                     <button
                       key={opcion.clave}
                       type="button"
+                      aria-pressed={seleccionado}
                       onClick={() => seleccionarIntensidad(opcion.clave)}
                       onMouseEnter={() => aplicarColorTienda(color, opcion.clave)}
                       onMouseLeave={terminarPrevisualizacion}
@@ -181,15 +211,24 @@ export function ConfiguracionTiendaPage() {
               </p>
             </div>
 
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={guardar.isPending || !configuracion || !nombre.trim()}
-              onClick={() => guardar.mutate()}
-            >
-              <Save className="size-4" />
-              {guardar.isPending ? "Guardando..." : "Guardar configuración"}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                className="flex-1"
+                size="lg"
+                disabled={guardar.isPending || !configuracion || !nombre.trim() || !hayCambios}
+                onClick={() => guardar.mutate()}
+              >
+                <Save className="size-4" />
+                {guardar.isPending ? "Guardando..." : hayCambios ? "Guardar configuración" : "Sin cambios"}
+              </Button>
+
+              {hayCambios ? (
+                <Button size="lg" variant="outline" disabled={guardar.isPending} onClick={descartarCambios}>
+                  <RotateCcw className="size-4" />
+                  Descartar cambios
+                </Button>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
       </div>
