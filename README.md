@@ -534,6 +534,18 @@ http://localhost:5173/
 
 Para utilizar el sistema durante el desarrollo deben permanecer ejecutándose simultáneamente el backend y el frontend.
 
+## Uso en el local (modo de producción)
+
+En el comercio no se usa Vite ni `runserver`: el sistema se entrega desde un único servidor (Waitress, puerto 8000) que ofrece la API y el frontend compilado.
+
+````bash
+cd frontend
+npm install
+npm run build
+````
+
+Luego, con `DEBUG=False` en el `.env`, se ejecuta `iniciar-tienda.bat` (en la raíz del proyecto) y se abre `http://<IP de la computadora>:8000`. Los pasos completos (IP fija, arranque automático y verificación) están en [docs/instalacion.md](docs/instalacion.md).
+
 ## Build del frontend
 
 Para verificar o generar el build de producción:

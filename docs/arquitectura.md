@@ -18,7 +18,7 @@ No es necesario instalar ninguna aplicación en los dispositivos que consultan e
 
 | Componente | Tecnología | Función |
 | --- | --- | --- |
-| Frontend | React, TypeScript y Vite (puerto 5173) | Entrega la pantalla de la aplicación y gestiona la interacción con el usuario. Genera los códigos QR en el navegador. |
+| Frontend | React, TypeScript y Vite (en el local se entrega ya compilado desde el puerto 8000; en desarrollo, puerto 5173) | Entrega la pantalla de la aplicación y gestiona la interacción con el usuario. Genera los códigos QR en el navegador. |
 | Backend | Django y Django REST Framework (puerto 8000) | Expone la API REST en formato JSON, aplica las reglas de negocio, valida los datos, calcula los precios, importa archivos Excel y controla la autenticación con JWT. |
 | Base de datos | PostgreSQL (puerto 5433) | Conserva toda la información: productos, variantes, stock, movimientos, ventas, cajas y configuraciones. |
 | Dispositivos cliente | Navegador web | Celular, computadora o notebook que se conectan al servidor por la red WiFi del local. |
@@ -32,8 +32,8 @@ El frontend no guarda información por su cuenta. Todos los datos pasan por la A
 La comunicación se realiza mediante el protocolo HTTP sobre la red WiFi del local. El caso más claro es la consulta del contenido de una caja desde un celular:
 
 1. El empleado escanea el código QR de la caja con la cámara del celular.
-2. El QR contiene una dirección con la forma `http://<IP-del-servidor>:5173/cajas/publica/<código>`. El celular la abre en su navegador y el servidor le entrega la pantalla.
-3. La pantalla pide al backend los datos de esa caja. El frontend detecta automáticamente la dirección del backend: usa el mismo equipo desde el que se abrió la aplicación, en el puerto 8000.
+2. El QR contiene una dirección con la forma `http://<IP-del-servidor>:8000/cajas/publica/<código>`. El celular la abre en su navegador y el servidor le entrega la pantalla.
+3. La pantalla pide al backend los datos de esa caja. En la versión del local, el backend es el mismo servidor que entregó la pantalla, por lo que el frontend usa esa misma dirección (en desarrollo, el mismo equipo en el puerto 8000).
 4. El backend busca la caja por su código, consulta la base de datos y responde con el contenido en formato JSON.
 5. El celular muestra los artículos, talles y cantidades registrados, sin necesidad de abrir la caja.
 
