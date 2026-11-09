@@ -20,6 +20,7 @@ import {
   radioRecuadro,
 } from "../lib/etiqueta-estilos";
 import { formatMoney } from "../lib/format";
+import { ordenarVariantes } from "../lib/talles";
 import { useTienda } from "../tienda/TiendaProvider";
 
 interface ItemCola {
@@ -50,6 +51,9 @@ const A4_ANCHO_CM = 21;
 const A4_ALTO_CM = 29.7;
 const MARGEN_HOJA_CM = 1;
 const ESPACIO_ENTRE_CM = 0.2;
+
+// La vista previa es la hoja A4 real (en cm) reducida con este factor.
+const ESCALA_VISTA = 0.8;
 
 export function GenerarEtiquetasPage() {
   const { nombre: nombreTienda } = useTienda();
@@ -86,7 +90,7 @@ export function GenerarEtiquetasPage() {
 
       setProducto(encontrado);
 
-      const primera = (encontrado.variantes ?? [])[0];
+      const primera = ordenarVariantes(encontrado.variantes ?? [])[0];
       if (primera) setVarianteId(String(primera.id));
     } catch (error) {
       setErrorBusqueda(error);
@@ -113,8 +117,19 @@ export function GenerarEtiquetasPage() {
     setCantidad(1);
   }
 
+  function cambiarCantidad(key: string, valor: number) {
+    const nueva = Math.max(1, Math.floor(valor) || 1);
+    setCola(cola.map((item) => (item.key === key ? { ...item, cantidad: nueva } : item)));
+  }
+
   function quitarDeCola(key: string) {
     setCola(cola.filter((item) => item.key !== key));
+  }
+
+  function vaciarLista() {
+    if (window.confirm("¿Vaciar la lista de etiquetas?")) {
+      setCola([]);
+    }
   }
 
   const totalEtiquetas = cola.reduce((acc, item) => acc + item.cantidad, 0);
@@ -190,7 +205,7 @@ export function GenerarEtiquetasPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {(producto.variantes ?? []).map((v) => (
+                        {ordenarVariantes(producto.variantes ?? []).map((v) => (
                           <SelectItem key={v.id} value={String(v.id)}>
                             {v.color} · {v.talle} (stock: {v.stock_actual})
                           </SelectItem>
@@ -232,25 +247,44 @@ export function GenerarEtiquetasPage() {
                   {cola.map((item) => (
                     <div
                       key={item.key}
-                      className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
                     >
-                      <div className="text-sm">
-                        <p className="font-medium">
-                          {item.producto.codigo} · {item.variante.color} · {item.variante.talle}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Cantidad: {item.cantidad}</p>
+                      <p className="text-sm font-medium">
+                        {item.producto.codigo} · {item.variante.color} · {item.variante.talle}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min="1"
+                          className="w-20"
+                          aria-label="Cantidad de etiquetas"
+                          value={item.cantidad}
+                          onChange={(event) => cambiarCantidad(item.key, Number(event.target.value))}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Quitar de la lista"
+                          onClick={() => quitarDeCola(item.key)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => quitarDeCola(item.key)}>
-                        <Trash2 className="size-4" />
-                      </Button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground">
-                {totalEtiquetas} etiquetas · {hojasNecesarias} hoja{hojasNecesarias === 1 ? "" : "s"} A4
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {totalEtiquetas} etiquetas · {hojasNecesarias} hoja{hojasNecesarias === 1 ? "" : "s"} A4
+                </p>
+                {cola.length > 0 ? (
+                  <Button variant="ghost" size="sm" onClick={vaciarLista}>
+                    Vaciar lista
+                  </Button>
+                ) : null}
+              </div>
 
               <Button className="w-full" size="lg" disabled={cola.length === 0} onClick={() => window.print()}>
                 <Printer className="size-4" />
@@ -264,23 +298,43 @@ export function GenerarEtiquetasPage() {
           <CardHeader>
             <CardTitle>Vista previa (primera hoja)</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-auto">
+          <CardContent className="space-y-3 overflow-auto">
             {config && paginas[0] ? (
-              <div
-                className="grid content-start gap-2 bg-white p-2"
-                style={{ gridTemplateColumns: `repeat(${columnas}, ${ancho * 24}px)` }}
-              >
-                {paginas[0].map((et, i) => (
-                  <EtiquetaImpresa
-                    key={i}
-                    producto={et.producto}
-                    variante={et.variante}
-                    config={config}
-                    nombreTienda={nombreTienda}
-                    escala={24}
-                  />
-                ))}
-              </div>
+              <>
+                <div
+                  className="relative mx-auto overflow-hidden border border-border bg-white shadow-sm"
+                  style={{
+                    width: `calc(${A4_ANCHO_CM}cm * ${ESCALA_VISTA})`,
+                    height: `calc(${A4_ALTO_CM}cm * ${ESCALA_VISTA})`,
+                  }}
+                >
+                  <div
+                    className="grid content-start"
+                    style={{
+                      width: `${A4_ANCHO_CM}cm`,
+                      height: `${A4_ALTO_CM}cm`,
+                      padding: `${MARGEN_HOJA_CM}cm`,
+                      gap: `${ESPACIO_ENTRE_CM}cm`,
+                      gridTemplateColumns: `repeat(${columnas}, ${ancho}cm)`,
+                      transform: `scale(${ESCALA_VISTA})`,
+                      transformOrigin: "top left",
+                    }}
+                  >
+                    {paginas[0].map((et, i) => (
+                      <EtiquetaImpresa
+                        key={i}
+                        producto={et.producto}
+                        variante={et.variante}
+                        config={config}
+                        nombreTienda={nombreTienda}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  Hoja 1 de {paginas.length} · así se imprime, a escala.
+                </p>
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">Agregá etiquetas a la lista para ver la vista previa.</p>
             )}
@@ -310,7 +364,6 @@ export function GenerarEtiquetasPage() {
                   variante={et.variante}
                   config={config}
                   nombreTienda={nombreTienda}
-                  escalaCm
                 />
               ))}
             </div>
@@ -325,29 +378,22 @@ function EtiquetaImpresa({
   variante,
   config,
   nombreTienda,
-  escala,
-  escalaCm,
 }: {
   producto: Producto;
   variante: VarianteProducto;
   config: ConfiguracionEtiqueta;
   nombreTienda: string;
-  escala?: number;
-  escalaCm?: boolean;
 }) {
   const posicion = POSICION_INDICE[config.posicion_nombre] ?? POSICION_POR_DEFECTO;
   const ancho = Number(config.ancho_cm);
   const alto = config.forma === "circular" ? ancho : Number(config.alto_cm);
 
-  const dimensiones = escalaCm
-    ? { width: `${ancho}cm`, height: `${alto}cm` }
-    : { width: `${ancho * (escala ?? 24)}px`, height: `${alto * (escala ?? 24)}px` };
-
   return (
     <div
       className="flex flex-col justify-between overflow-hidden p-2"
       style={{
-        ...dimensiones,
+        width: `${ancho}cm`,
+        height: `${alto}cm`,
         background: `linear-gradient(135deg, ${config.color_fondo}, ${config.color_fondo_2})`,
         fontFamily: fontFamilyDe(config.fuente),
         borderRadius: radioEtiqueta(config.forma, config.estilo),

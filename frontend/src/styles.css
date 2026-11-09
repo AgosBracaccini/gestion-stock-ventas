@@ -194,6 +194,14 @@
   );
 }
 
+/* Al imprimir, la página va siempre en blanco (no se imprime el tinte del fondo de la app). */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+}
+
 /* Impresión de hojas de etiquetas: solo se imprime .hoja-impresion */
 @media print {
   @page {
