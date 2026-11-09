@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 import uuid
 
+from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from openpyxl.utils.exceptions import InvalidFileException
@@ -50,7 +51,9 @@ from .importar_excel import (
 )
 
 class ProveedorViewSet(viewsets.ModelViewSet):
-    queryset = Proveedor.objects.all()
+    queryset = Proveedor.objects.annotate(
+        cantidad_productos=Count("productos")
+    ).order_by("nombre")
     serializer_class = ProveedorSerializer
 
     filter_backends = [

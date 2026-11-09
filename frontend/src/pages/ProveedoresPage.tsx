@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { proveedoresService } from "../api/services/proveedores.service";
@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
+import { formatCount } from "../lib/format";
 
 export function ProveedoresPage() {
   const queryClient = useQueryClient();
@@ -50,20 +51,27 @@ export function ProveedoresPage() {
       setEditando(null);
       setNombre("");
       void queryClient.invalidateQueries({ queryKey: ["proveedores"] });
+      // Los productos muestran el nombre del proveedor: se refrescan también.
+      void queryClient.invalidateQueries({ queryKey: ["stock-rows"] });
     },
   });
 
-  const filtrados = (proveedores ?? []).filter((p) =>
-    p.nombre.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const filtrados = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return [...(proveedores ?? [])]
+      .filter((p) => p.nombre.toLowerCase().includes(term))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+  }, [proveedores, search]);
 
   function abrirNuevo() {
+    guardar.reset();
     setEditando(null);
     setNombre("");
     setDialogOpen(true);
   }
 
   function abrirEdicion(proveedor: Proveedor) {
+    guardar.reset();
     setEditando(proveedor);
     setNombre(proveedor.nombre);
     setDialogOpen(true);
@@ -73,7 +81,7 @@ export function ProveedoresPage() {
     <>
       <PageHeader
         title="Proveedores"
-        description="Listado, búsqueda, alta y edición de proveedores."
+        description="Quiénes te proveen la mercadería."
         actions={
           <Button onClick={abrirNuevo}>
             <Plus className="size-4" /> Nuevo proveedor
@@ -96,12 +104,19 @@ export function ProveedoresPage() {
           <ErrorMessage error={error} />
         </div>
 
-        <div className="mt-4 overflow-x-auto">
+        {!isLoading ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            <strong className="text-foreground">{formatCount(filtrados.length)}</strong>{" "}
+            proveedores
+          </p>
+        ) : null}
+
+        <div className="mt-3 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20">ID</TableHead>
                 <TableHead>Nombre</TableHead>
+                <TableHead className="text-right">Productos</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -116,10 +131,18 @@ export function ProveedoresPage() {
                   ))
                 : filtrados.map((proveedor) => (
                     <TableRow key={proveedor.id}>
-                      <TableCell className="text-muted-foreground">{proveedor.id}</TableCell>
                       <TableCell className="font-medium">{proveedor.nombre}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => abrirEdicion(proveedor)}>
+                        {proveedor.cantidad_productos ? (
+                          <span className="font-medium">
+                            {formatCount(proveedor.cantidad_productos)}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Sin productos</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" onClick={() => abrirEdicion(proveedor)}>
                           Editar
                         </Button>
                       </TableCell>
@@ -142,19 +165,32 @@ export function ProveedoresPage() {
           <DialogHeader>
             <DialogTitle>{editando ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre</Label>
-            <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus />
-          </div>
-          <ErrorMessage error={guardar.error} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={() => guardar.mutate()} disabled={!nombre.trim() || guardar.isPending}>
-              {guardar.isPending ? <Loader2 className="size-4 animate-spin" /> : "Guardar"}
-            </Button>
-          </DialogFooter>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (nombre.trim() && !guardar.isPending) guardar.mutate();
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre</Label>
+              <Input
+                id="nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <ErrorMessage error={guardar.error} />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={!nombre.trim() || guardar.isPending}>
+                {guardar.isPending ? <Loader2 className="size-4 animate-spin" /> : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
