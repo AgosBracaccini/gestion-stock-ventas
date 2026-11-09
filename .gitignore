@@ -21,3 +21,4 @@ db.sqlite3
 # Sistema operativo
 .DS_Store
 Thumbs.db
+*.dump

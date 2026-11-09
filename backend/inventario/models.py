@@ -1,3 +1,4 @@
+from .normalizacion import normalizar_color, normalizar_talle
 from django.db import models
 from decimal import Decimal
 import uuid
@@ -96,6 +97,11 @@ class VarianteProducto(models.Model):
                 name="unique_producto_color_talle"
             )
         ]
+
+    def save(self, *args, **kwargs):
+        self.color = normalizar_color(self.color)
+        self.talle = normalizar_talle(self.talle)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.producto.codigo} - {self.color} - {self.talle}"

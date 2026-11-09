@@ -26,8 +26,8 @@ import unicodedata
 from decimal import Decimal, InvalidOperation
 
 from openpyxl import load_workbook
-
 from .models import Producto, Proveedor, VarianteProducto
+from .normalizacion import normalizar_color, normalizar_talle
 
 TAMANO_MAXIMO_EXCEL = 5 * 1024 * 1024  # 5 MB
 
@@ -147,8 +147,8 @@ def procesar_fila_stock(datos):
     el producto de una. Si no vienen, se avisa qué falta para poder crearlo.
     """
     codigo = str(datos.get("codigo") or "").strip()
-    color = str(datos.get("color") or "").strip()
-    talle = str(datos.get("talle") or "").strip()
+    color = normalizar_color(datos.get("color"))
+    talle = normalizar_talle(datos.get("talle"))
     cantidad = datos.get("cantidad")
 
     if not codigo:
