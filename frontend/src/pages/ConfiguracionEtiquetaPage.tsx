@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save } from "lucide-react";
+import { RotateCcw, Save, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { configuracionEtiquetaService } from "../api/services/configuracion.service";
-import type { EstiloEtiqueta, FormaEtiqueta, FuenteEtiqueta, PosicionNombreEtiqueta } from "../api/types";
+import type {
+  ConfiguracionEtiqueta,
+  EstiloEtiqueta,
+  FormaEtiqueta,
+  FuenteEtiqueta,
+  PosicionNombreEtiqueta,
+} from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/ui/button";
@@ -29,6 +35,9 @@ const A4_ALTO_CM = 29.7;
 const MARGEN_HOJA_CM = 1;
 const ESPACIO_ENTRE_CM = 0.2;
 
+const ANCHO_MAXIMO_CM = A4_ANCHO_CM - MARGEN_HOJA_CM * 2;
+const ALTO_MAXIMO_CM = A4_ALTO_CM - MARGEN_HOJA_CM * 2;
+
 const POSICIONES: { clave: PosicionNombreEtiqueta; fila: 0 | 1 | 2; columna: 0 | 1 | 2 }[] = [
   { clave: "arriba_izquierda", fila: 0, columna: 0 },
   { clave: "arriba_centro", fila: 0, columna: 1 },
@@ -45,6 +54,50 @@ const POSICION_POR_DEFECTO = { clave: "arriba_centro" as PosicionNombreEtiqueta,
 
 const JUSTIFY_POR_COLUMNA = ["start", "center", "end"] as const;
 const ALIGN_POR_FILA = ["start", "center", "end"] as const;
+
+// Contraste entre dos colores (#rrggbb), según la fórmula de accesibilidad WCAG.
+function luminancia(hex: string) {
+  const canal = (i: number) => {
+    const valor = parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255;
+    return valor <= 0.03928 ? valor / 12.92 : Math.pow((valor + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * canal(0) + 0.7152 * canal(1) + 0.0722 * canal(2);
+}
+
+function contraste(a: string, b: string) {
+  const la = luminancia(a);
+  const lb = luminancia(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+const CONTRASTE_MINIMO = 3;
+
+function CampoColor({
+  id,
+  etiqueta,
+  valor,
+  onCambio,
+}: {
+  id: string;
+  etiqueta: string;
+  valor: string;
+  onCambio: (valor: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{etiqueta}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type="color"
+          value={valor}
+          onChange={(event) => onCambio(event.target.value)}
+          className="h-10 w-16 shrink-0 cursor-pointer p-1"
+        />
+        <span className="font-mono text-xs uppercase text-muted-foreground">{valor}</span>
+      </div>
+    </div>
+  );
+}
 
 export function ConfiguracionEtiquetaPage() {
   const queryClient = useQueryClient();
@@ -74,22 +127,26 @@ export function ConfiguracionEtiquetaPage() {
     queryFn: () => configuracionEtiquetaService.obtener(),
   });
 
+  function cargarDesde(c: ConfiguracionEtiqueta) {
+    setForma(c.forma);
+    setAnchoCm(c.ancho_cm);
+    setAltoCm(c.forma === "circular" ? c.ancho_cm : c.alto_cm);
+    setColorFondo(c.color_fondo);
+    setColorFondo2(c.color_fondo_2);
+    setSubtitulo(c.subtitulo);
+    setColorTexto(c.color_texto);
+    setColorTextoTienda(c.color_texto_tienda);
+    setColorRectangulos(c.color_rectangulos);
+    setEstilo(c.estilo);
+    setFuente(c.fuente);
+    setTamanoTienda(String(c.tamano_texto_tienda));
+    setTamanoCodigo(String(c.tamano_texto_codigo));
+    setPosicionNombre(c.posicion_nombre);
+  }
+
   useEffect(() => {
-    if (!configuracion) return;
-    setForma(configuracion.forma);
-    setAnchoCm(configuracion.ancho_cm);
-    setAltoCm(configuracion.forma === "circular" ? configuracion.ancho_cm : configuracion.alto_cm);
-    setColorFondo(configuracion.color_fondo);
-    setColorFondo2(configuracion.color_fondo_2);
-    setSubtitulo(configuracion.subtitulo);
-    setColorTexto(configuracion.color_texto);
-    setColorTextoTienda(configuracion.color_texto_tienda);
-    setColorRectangulos(configuracion.color_rectangulos);
-    setEstilo(configuracion.estilo);
-    setFuente(configuracion.fuente);
-    setTamanoTienda(String(configuracion.tamano_texto_tienda));
-    setTamanoCodigo(String(configuracion.tamano_texto_codigo));
-    setPosicionNombre(configuracion.posicion_nombre);
+    if (configuracion) cargarDesde(configuracion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configuracion]);
 
   const guardar = useMutation({
@@ -132,6 +189,58 @@ export function ConfiguracionEtiquetaPage() {
   const capacidadPorHoja = columnas * filas;
 
   const posicionActual = POSICIONES.find((p) => p.clave === posicionNombre) ?? POSICION_POR_DEFECTO;
+
+  // Validaciones
+  const anchoValido = ancho >= 1 && ancho <= ANCHO_MAXIMO_CM;
+  const altoValido = alto >= 1 && alto <= ALTO_MAXIMO_CM;
+  const tamanosValidos = [tamanoTienda, tamanoCodigo].every((t) => Number(t) >= 6 && Number(t) <= 72);
+  const valido = anchoValido && altoValido && tamanosValidos;
+
+  // Contraste de las letras con el fondo (para que la etiqueta impresa se lea)
+  const contrasteNombre = Math.min(contraste(colorTextoTienda, colorFondo), contraste(colorTextoTienda, colorFondo2));
+  const contrasteCodigo =
+    estilo === "relleno_solido"
+      ? contraste(colorTexto, colorRectangulos)
+      : Math.min(contraste(colorTexto, colorFondo), contraste(colorTexto, colorFondo2));
+
+  // ¿Hay cambios sin guardar?
+  const firmaActual = JSON.stringify([
+    forma,
+    Number(anchoCm),
+    Number(forma === "circular" ? anchoCm : altoCm),
+    colorFondo.toLowerCase(),
+    colorFondo2.toLowerCase(),
+    subtitulo,
+    colorTexto.toLowerCase(),
+    colorTextoTienda.toLowerCase(),
+    colorRectangulos.toLowerCase(),
+    estilo,
+    fuente,
+    Number(tamanoTienda),
+    Number(tamanoCodigo),
+    posicionNombre,
+  ]);
+
+  const firmaGuardada = configuracion
+    ? JSON.stringify([
+        configuracion.forma,
+        Number(configuracion.ancho_cm),
+        Number(configuracion.forma === "circular" ? configuracion.ancho_cm : configuracion.alto_cm),
+        configuracion.color_fondo.toLowerCase(),
+        configuracion.color_fondo_2.toLowerCase(),
+        configuracion.subtitulo,
+        configuracion.color_texto.toLowerCase(),
+        configuracion.color_texto_tienda.toLowerCase(),
+        configuracion.color_rectangulos.toLowerCase(),
+        configuracion.estilo,
+        configuracion.fuente,
+        Number(configuracion.tamano_texto_tienda),
+        Number(configuracion.tamano_texto_codigo),
+        configuracion.posicion_nombre,
+      ])
+    : "";
+
+  const hayCambios = !!configuracion && firmaActual !== firmaGuardada;
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Cargando configuración...</p>;
@@ -196,6 +305,7 @@ export function ConfiguracionEtiquetaPage() {
                   id="ancho-etiqueta"
                   type="number"
                   min="1"
+                  max={ANCHO_MAXIMO_CM}
                   step="0.5"
                   value={anchoCm}
                   onChange={(event) => setAnchoCm(event.target.value)}
@@ -208,6 +318,7 @@ export function ConfiguracionEtiquetaPage() {
                   id="alto-etiqueta"
                   type="number"
                   min="1"
+                  max={ALTO_MAXIMO_CM}
                   step="0.5"
                   value={forma === "circular" ? anchoCm : altoCm}
                   onChange={(event) => setAltoCm(event.target.value)}
@@ -273,61 +384,41 @@ export function ConfiguracionEtiquetaPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="color-fondo">Fondo de la etiqueta</Label>
-                <Input
-                  id="color-fondo"
-                  type="color"
-                  value={colorFondo}
-                  onChange={(event) => setColorFondo(event.target.value)}
-                  className="h-10 w-full cursor-pointer p-1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="color-fondo-2">Fondo (2º color, degradé)</Label>
-                <Input
-                  id="color-fondo-2"
-                  type="color"
-                  value={colorFondo2}
-                  onChange={(event) => setColorFondo2(event.target.value)}
-                  className="h-10 w-full cursor-pointer p-1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="color-rectangulos">Fondo de los recuadros</Label>
-                <Input
-                  id="color-rectangulos"
-                  type="color"
-                  value={colorRectangulos}
-                  onChange={(event) => setColorRectangulos(event.target.value)}
-                  className="h-10 w-full cursor-pointer p-1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="color-texto-tienda">Letra del nombre de tienda</Label>
-                <Input
-                  id="color-texto-tienda"
-                  type="color"
-                  value={colorTextoTienda}
-                  onChange={(event) => setColorTextoTienda(event.target.value)}
-                  className="h-10 w-full cursor-pointer p-1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="color-texto">Letra del código/talle</Label>
-                <Input
-                  id="color-texto"
-                  type="color"
-                  value={colorTexto}
-                  onChange={(event) => setColorTexto(event.target.value)}
-                  className="h-10 w-full cursor-pointer p-1"
-                />
-              </div>
+              <CampoColor id="color-fondo" etiqueta="Fondo de la etiqueta" valor={colorFondo} onCambio={setColorFondo} />
+              <CampoColor
+                id="color-fondo-2"
+                etiqueta="Fondo (2º color, degradé)"
+                valor={colorFondo2}
+                onCambio={setColorFondo2}
+              />
+              <CampoColor
+                id="color-rectangulos"
+                etiqueta="Fondo de los recuadros"
+                valor={colorRectangulos}
+                onCambio={setColorRectangulos}
+              />
+              <CampoColor
+                id="color-texto-tienda"
+                etiqueta="Letra del nombre de tienda"
+                valor={colorTextoTienda}
+                onCambio={setColorTextoTienda}
+              />
+              <CampoColor id="color-texto" etiqueta="Letra del código/talle" valor={colorTexto} onCambio={setColorTexto} />
             </div>
+
+            {contrasteNombre < CONTRASTE_MINIMO ? (
+              <p className="flex items-start gap-2 rounded-lg border border-warning/70 bg-warning/30 px-3 py-2 text-sm font-medium text-warning-foreground">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                La letra del nombre de la tienda casi no se distingue del fondo: impresa se va a leer mal.
+              </p>
+            ) : null}
+
+            {contrasteCodigo < CONTRASTE_MINIMO ? (
+              <p className="flex items-start gap-2 rounded-lg border border-warning/70 bg-warning/30 px-3 py-2 text-sm font-medium text-warning-foreground">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                La letra del código y el talle casi no se distingue del fondo: impresa se va a leer mal.
+              </p>
+            ) : null}
 
             <div className="space-y-2">
               <Label>Posición del nombre de la tienda</Label>
@@ -337,6 +428,7 @@ export function ConfiguracionEtiquetaPage() {
                     key={p.clave}
                     type="button"
                     onClick={() => setPosicionNombre(p.clave)}
+                    aria-pressed={p.clave === posicionNombre}
                     className={cn(
                       "flex aspect-square items-center justify-center rounded",
                       p.clave === posicionNombre ? "bg-primary" : "bg-muted hover:bg-muted/70",
@@ -354,24 +446,52 @@ export function ConfiguracionEtiquetaPage() {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Con este tamaño entran aproximadamente <strong>{capacidadPorHoja}</strong> etiquetas por hoja A4
-              ({columnas} columnas × {filas} filas).
-            </p>
+            {valido ? (
+              <p className="text-xs text-muted-foreground">
+                Con este tamaño entran aproximadamente <strong>{capacidadPorHoja}</strong> etiquetas por hoja A4
+                ({columnas} columnas × {filas} filas).
+              </p>
+            ) : (
+              <div className="space-y-1 text-sm font-medium text-destructive">
+                {!anchoValido ? (
+                  <p>
+                    {forma === "circular" ? "El diámetro" : "El ancho"} tiene que estar entre 1 y {ANCHO_MAXIMO_CM} cm.
+                  </p>
+                ) : null}
+                {!altoValido && forma !== "circular" ? (
+                  <p>El alto tiene que estar entre 1 y {String(ALTO_MAXIMO_CM).replace(".", ",")} cm.</p>
+                ) : null}
+                {!tamanosValidos ? <p>Los tamaños de letra tienen que estar entre 6 y 72 pt.</p> : null}
+              </div>
+            )}
 
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={guardar.isPending || !configuracion}
-              onClick={() => guardar.mutate()}
-            >
-              <Save className="size-4" />
-              {guardar.isPending ? "Guardando..." : "Guardar diseño"}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                className="flex-1"
+                size="lg"
+                disabled={guardar.isPending || !configuracion || !hayCambios || !valido}
+                onClick={() => guardar.mutate()}
+              >
+                <Save className="size-4" />
+                {guardar.isPending ? "Guardando..." : hayCambios ? "Guardar diseño" : "Sin cambios"}
+              </Button>
+
+              {hayCambios ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  disabled={guardar.isPending}
+                  onClick={() => configuracion && cargarDesde(configuracion)}
+                >
+                  <RotateCcw className="size-4" />
+                  Descartar cambios
+                </Button>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="h-fit">
+        <Card className="h-fit md:sticky md:top-4">
           <CardHeader>
             <CardTitle>Vista previa</CardTitle>
           </CardHeader>
