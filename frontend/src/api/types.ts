@@ -20,6 +20,7 @@ export type TipoMovimiento = "ENTRADA" | "VENTA" | "AJUSTE";
 export interface Proveedor {
   id: number;
   nombre: string;
+  cantidad_productos?: number;
 }
 
 export interface VarianteProducto {

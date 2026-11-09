@@ -15,9 +15,24 @@ from .models import (
 )
 
 class ProveedorSerializer(serializers.ModelSerializer):
+    cantidad_productos = serializers.SerializerMethodField()
+
     class Meta:
         model = Proveedor
         fields = "__all__"
+
+    def get_cantidad_productos(self, obj):
+        valor = getattr(obj, "cantidad_productos", None)
+        return valor if valor is not None else obj.productos.count()
+
+    def validate_nombre(self, value):
+        nombre = " ".join(value.split())
+        repetidos = Proveedor.objects.filter(nombre__iexact=nombre)
+        if self.instance is not None:
+            repetidos = repetidos.exclude(pk=self.instance.pk)
+        if repetidos.exists():
+            raise serializers.ValidationError("Ya existe un proveedor con ese nombre.")
+        return nombre
 
 class VarianteProductoNestedSerializer(serializers.ModelSerializer):
     class Meta:
