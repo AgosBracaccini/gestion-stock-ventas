@@ -34,7 +34,7 @@ Desarrollar una aplicación web que permita centralizar la gestión de:
 - personalización de la tienda (nombre y color);
 - diseño e impresión de etiquetas de precio;
 - cajas de depósito identificadas con códigos QR;
-- importación del catálogo y del stock desde los archivos Excel existentes.
+- importación del catálogo, del stock y del historial de ventas desde los archivos Excel existentes.
 
 Al confirmar una venta, el sistema valida la disponibilidad, calcula los importes correspondientes, registra la operación, descuenta automáticamente el stock y genera el movimiento de inventario asociado.
 
@@ -248,6 +248,9 @@ Las transferencias se registran inicialmente como pendientes de verificación y 
 
 - Importación del catálogo (hoja de precios): crea o actualiza productos y proveedores a partir de código, descripción, costo, costos extras y proveedor. Los precios no se importan porque el sistema los calcula a partir del costo.
 - Importación del stock (hoja `stock`): crea o actualiza las variantes a partir de código, color, talle y cantidad.
+- Importación del historial de ventas: agrupa las filas por número de venta y conserva la fecha y el precio unitario del archivo. No modifica el stock ni genera movimientos. Omite las ventas ya existentes (misma fecha, medio de pago y total). Las transferencias requieren nombre, apellido y teléfono.
+- La importación de stock reemplaza la cantidad actual de cada variante y no genera movimientos, por lo que el sistema pide confirmación antes de ejecutarla.
+- Se aceptan archivos `.xlsx` de hasta 5 MB.
 - Los encabezados se interpretan sin distinguir mayúsculas ni tildes.
 - Las filas con errores no detienen la importación: se informan en pantalla y pueden corregirse a mano desde la misma página.
 - Si un código de stock no corresponde a un producto existente, se puede crear el producto completando prenda, costo y proveedor.
@@ -260,7 +263,12 @@ Las transferencias se registran inicialmente como pendientes de verificación y 
 - Documentación OpenAPI / Swagger.
 - CORS configurado para la comunicación con el frontend.
 - Manejo de errores HTTP.
-- Pruebas automatizadas del backend.
+- Colores y talles normalizados al guardar (sin variantes duplicadas por mayúsculas o espacios).
+- Nombres de proveedor únicos, sin distinguir mayúsculas ni espacios.
+- Simulación y confirmación antes de cambiar los parámetros de precios.
+- Configuración sensible por variables de entorno; el servidor no arranca con `DEBUG=False` sin `SECRET_KEY`.
+- Tokens JWT de corta duración y límite de 5 intentos por minuto en el login.
+- Pruebas automatizadas del backend (68 pruebas).
 - Validación del rollback transaccional.
 - Build de producción del frontend verificado.
 
@@ -268,7 +276,7 @@ Las transferencias se registran inicialmente como pendientes de verificación y 
 
 ### Dashboard
 
-Resumen de ventas e inventario con métricas obtenidas a partir de los datos reales registrados en el sistema.
+Resumen de ventas e inventario con métricas obtenidas a partir de los datos registrados en el sistema (datos de demostración).
 
 ![Dashboard](docs/images/screenshots/dashboard.png)
 
@@ -384,7 +392,13 @@ Entre los comportamientos comprobados se encuentran:
 - rollback completo ante errores durante una operación;
 - cálculo de precios según medio de pago;
 - acceso protegido mediante JWT;
-- acceso exitoso de usuarios autenticados.
+- acceso exitoso de usuarios autenticados;
+- normalización de colores y talles, y unificación de variantes duplicadas;
+- unicidad de nombres de proveedor y conteo de productos asociados;
+- datos completos de los movimientos de stock;
+- importación desde Excel.
+
+Estado actual: 68 pruebas, todas correctas (09/11/2026). Los casos de prueba manuales y sus resultados están en [`docs/pruebas.md`](docs/pruebas.md).
 
 Para ejecutar todos los tests:
 
@@ -445,11 +459,11 @@ pip install -r requirements.txt
 Crear un archivo `.env` en la raíz tomando como referencia `.env.example`.
 
 ```env
-DB_NAME=gestion_tienda
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_HOST=localhost
 DB_PORT=5433
+SECRET_KEY=generar_una_clave_larga_y_aleatoria
+DEBUG=True
+ALLOWED_HOSTS=
+CORS_ORIGINS=
 ```
 
 Los valores deben adaptarse a la configuración local de PostgreSQL.
@@ -558,7 +572,9 @@ gestion-stock-ventas/
 │   ├── arquitectura.md
 │   ├── as-is.md
 │   ├── frontend.md
+│   ├── instalacion.md
 │   ├── modelo-datos.md
+│   ├── pruebas.md
 │   └── requerimientos.md
 │
 ├── .env.example
@@ -576,7 +592,9 @@ En la carpeta [`docs`](docs/) se encuentra documentación relacionada con:
 - decisiones de diseño;
 - arquitectura del sistema y comunicación entre dispositivos;
 - proceso de registro y consulta de cajas de depósito;
-- documentación del frontend.
+- documentación del frontend;
+- casos de prueba manuales y resultados;
+- instalación y puesta en marcha en el local, con las medidas de seguridad.
 
 ## Estado del proyecto
 
@@ -595,21 +613,29 @@ Django REST Framework
         ↓
     PostgreSQL
 
-Segunda etapa
+``````
+
+### Segunda etapa
 
 Sobre la V1 se incorporaron cuatro módulos, desarrollados cada uno en su propia rama y fusionados mediante pull request:
 
-personalización de la tienda;
-etiquetas de precio;
-cajas de depósito con QR;
-importación desde Excel.
-Limitaciones conocidas y trabajo futuro
-Dirección de los QR: el QR contiene la dirección desde la que se abrió la aplicación. En una red local con IP dinámica, un QR impreso deja de funcionar si cambia la IP del equipo. Soluciones posibles: reservar una IP fija en el router o publicar el sistema con un dominio propio.
-HTTPS y configuración de producción: el desarrollo se realiza sobre HTTP. Para producción es necesario usar HTTPS, desactivar DEBUG, restringir ALLOWED_HOSTS y los orígenes CORS, y mover SECRET_KEY a una variable de entorno.
-Pruebas automatizadas: los módulos de la segunda etapa se probaron manualmente. Las pruebas automatizadas actuales cubren las reglas de inventario y ventas de la V1.
-Historial de ventas en Excel: no se importa. La importación contempla solo el catálogo y el stock.
+- personalización de la tienda;
+- etiquetas de precio;
+- cajas de depósito con QR;
+- importación desde Excel (catálogo, stock e historial de ventas).
 
-```
+Luego se realizó una revisión de seguridad y de interfaz módulo por módulo, que incorporó la normalización de colores y talles, la unicidad de proveedores, las confirmaciones en operaciones sensibles y las medidas descritas en [`docs/instalacion.md`](docs/instalacion.md).
+
+### Limitaciones conocidas y trabajo futuro
+
+- **Dirección de los QR:** el QR contiene la dirección desde la que se abrió la aplicación. En una red local con IP dinámica, un QR impreso deja de funcionar si cambia la IP del equipo. Soluciones posibles: reservar una IP fija en el router o publicar el sistema con un dominio propio.
+- **HTTPS:** la comunicación en la red local usa HTTP. Para acceder desde fuera del local es necesario incorporar HTTPS.
+- **Servidor de producción:** se usa el servidor de desarrollo de Django y de Vite. Para un uso más exigente conviene un servidor de producción (por ejemplo, Waitress) y el frontend compilado.
+- **Roles de usuario:** no se distinguen permisos entre usuarios.
+- **Respaldos:** no están automatizados (ver `docs/instalacion.md`).
+- **Paginación:** el historial de ventas y los movimientos se paginan en el navegador; con mucho volumen convendría paginar en el servidor.
+- **Etiquetas:** la lista de etiquetas a imprimir no se conserva al recargar la página.
+``````
 
 ## Autor
 

@@ -34,6 +34,11 @@ Comportamiento de seguridad ya incorporado:
 - Con `DEBUG=False` el servidor **no arranca** si falta `SECRET_KEY`.
 - Con `DEBUG=False` los errores no muestran detalles internos del sistema.
 - Con `DEBUG=False` solo se aceptan los hosts y orígenes listados en el `.env`.
+- La sesión usa tokens JWT: el de acceso dura 30 minutos y el de renovación 1 día.
+- El inicio de sesión admite 5 intentos por minuto; luego se bloquea temporalmente.
+- Los archivos de importación deben ser `.xlsx` y pesar hasta 5 MB.
+- Las consultas públicas se limitan a la caja (por su código único, que no puede
+  adivinarse) y al nombre y color de la tienda. El resto exige iniciar sesión.
 
 ## 3. IP fija de la computadora (paso obligatorio antes de imprimir QR)
 
@@ -78,6 +83,11 @@ el celular se abre `http://<IP de la computadora>:5173`.
 - [ ] Una dirección inexistente (`/api/algo-que-no-existe/`) muestra un error
       simple, sin detalles internos.
 - [ ] Con `SECRET_KEY` comentada y `DEBUG=False`, el servidor no arranca.
+- [ ] Tras 6 contraseñas incorrectas seguidas en un minuto, el login se bloquea.
+- [ ] Al imprimir el QR de una caja desde `localhost`, el sistema advierte que no
+      funcionará desde un celular.
+- [ ] Desde la carpeta `backend`, `python manage.py test` informa que todas las
+      pruebas automatizadas pasan (68 al 09/11/2026).
 
 ## 6. Limitaciones y mejoras pendientes
 
@@ -86,5 +96,28 @@ el celular se abre `http://<IP de la computadora>:5173`.
 - Se usa el servidor de desarrollo de Django y de Vite. Para un uso más exigente
   conviene un servidor de producción (por ejemplo, Waitress en Windows) y generar
   el frontend compilado.
-- Las copias de seguridad de la base de datos no están automatizadas.
+- Las copias de seguridad de la base de datos no están automatizadas (ver sección 7).
 - Si cambia el router o se restablece de fábrica, hay que repetir la reserva de IP.
+- El sistema no distingue roles: todos los usuarios con sesión iniciada tienen los
+  mismos permisos. Conviene crear solo los usuarios necesarios.
+- La importación de stock reemplaza las cantidades actuales. El sistema pide
+  confirmación, pero conviene hacer un respaldo antes de usarla.
+
+## 7. Copia de seguridad manual
+
+Desde PowerShell, ajustando la versión de PostgreSQL, el puerto, el usuario y el
+nombre de la base a los de la instalación:
+
+
+```
+& "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe" -U <usuario> -p <puerto> -Fc -f respaldo.dump <base>
+```
+
+Reglas:
+
+- Guardar el archivo **fuera de la carpeta del proyecto** (por ejemplo, en un
+  pendrive o en la nube). Contiene los datos del comercio.
+- Los archivos `*.dump` están excluidos del repositorio mediante `.gitignore`,
+  y nunca deben subirse.
+- Hacer un respaldo antes de importar stock, de actualizar el sistema y de
+  aplicar migraciones.

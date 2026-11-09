@@ -38,8 +38,12 @@ Sobre la primera versión se incorporaron los siguientes módulos:
 - Generación e impresión de etiquetas
 - Cajas de depósito con su contenido
 - Código QR por caja y consulta pública desde el celular
-- Importación de catálogo y stock desde archivos Excel
+- Importación de catálogo, stock e historial de ventas desde archivos Excel
 - Corrección manual de las filas que no pudieron importarse
+- Normalización de colores y talles
+- Unicidad de proveedores
+- Simulación y confirmación de cambios de precios
+- Medidas de seguridad de la configuración y del acceso
 
 Quedan para versiones posteriores los reportes avanzados, los indicadores comerciales adicionales, los roles específicos, la exportación de información y las configuraciones avanzadas.
 
@@ -173,6 +177,7 @@ La venta deberá registrar:
 - Fecha
 - Medio de pago
 - Total
+
 Cuando el medio de pago sea `TRANSFERENCIA`, la venta deberá registrar además:
 
 - Nombre del cliente
@@ -448,14 +453,19 @@ Esta consulta no requerirá iniciar sesión y será de solo lectura.
 
 ## RF-25 - Importación desde Excel
 
-El sistema deberá permitir cargar la información existente en archivos Excel, mediante dos importaciones:
+El sistema deberá permitir cargar la información existente en archivos Excel (.xlsx, de hasta 5 MB), mediante tres importaciones:
 
 - **Catálogo y precios**: código, descripción, costo, costo extra y proveedor.
 - **Stock**: código, color, talle y cantidad.
+- **Historial de ventas**: número de venta, fecha, medio de pago, código, color, talle, cantidad y precio unitario.
 
 La importación del catálogo deberá crear los productos que no existan y actualizar los existentes. Los proveedores que no existan deberán crearse.
 
 La importación del stock deberá crear o actualizar las variantes. Si el código no corresponde a un producto existente y la fila incluye prenda, costo y proveedor, el producto deberá crearse, ya que puede tratarse de mercadería nueva.
+
+La importación del stock reemplaza la cantidad actual de cada variante por la cantidad del archivo y no genera movimientos de stock. Por ese motivo, el sistema deberá advertirlo y solicitar una confirmación explícita antes de ejecutarla.
+
+La importación del historial de ventas agrupa las filas por número de venta y conserva la fecha y el precio unitario del archivo. No modifica el stock ni genera movimientos, ya que registra ventas pasadas. Las ventas que ya existen (misma fecha, medio de pago y total) deberán omitirse para evitar duplicados. Las ventas por transferencia deberán incluir nombre, apellido y teléfono del cliente, y se registran como verificadas.
 
 Al finalizar, el sistema deberá informar cuántas filas se procesaron y cuáles presentaron errores, indicando el motivo.
 
@@ -468,6 +478,38 @@ Un error en una fila no deberá impedir la importación de las demás.
 Las filas que no pudieron importarse deberán poder corregirse desde la pantalla de importación, completando o modificando sus datos.
 
 La corrección manual deberá aplicar las mismas validaciones que la importación desde el archivo.
+
+---
+
+## RF-27 - Normalización de colores y talles
+
+El sistema deberá normalizar el color y el talle de cada variante al guardarla, sin importar si se carga desde el ingreso de mercadería, desde la importación de Excel o desde cualquier otro punto.
+
+- El color se guarda con la primera letra en mayúscula y el resto en minúscula.
+- El talle se guarda en mayúsculas.
+- Los espacios repetidos o sobrantes se eliminan.
+
+De esta forma, "negro", "NEGRO" y " Negro " corresponden a la misma variante y no se generan duplicados ni stock dividido.
+
+Las variantes duplicadas que pudieran existir antes de aplicar esta regla deberán unificarse mediante una migración de datos, sumando su stock y conservando sus movimientos, items de caja y detalles de venta.
+
+---
+
+## RF-28 - Unicidad del nombre de proveedor
+
+El sistema no deberá permitir registrar dos proveedores con el mismo nombre, sin distinguir mayúsculas de minúsculas ni espacios repetidos.
+
+La pantalla de proveedores deberá mostrar cuántos productos tiene asociados cada uno.
+
+Esta regla evita que las importaciones encuentren más de un proveedor con el mismo nombre.
+
+---
+
+## RF-29 - Simulación y confirmación de cambios de precios
+
+Antes de guardar cambios en los parámetros de precios (multiplicador, descuentos y recargos), el sistema deberá mostrar una simulación del efecto sobre los precios de venta, y solicitar confirmación.
+
+Los cambios de precios no deberán alterar las ventas ya registradas, ya que cada venta conserva el precio unitario al que se realizó.
 
 ---
 
@@ -491,7 +533,17 @@ Esto permitirá desacoplar el backend del frontend.
 
 Los endpoints principales deberán encontrarse protegidos mediante autenticación.
 
-Las credenciales y datos sensibles de configuración no deberán almacenarse directamente en el repositorio.
+Las credenciales y datos sensibles de configuración no deberán almacenarse directamente en el repositorio. La clave secreta, el modo de depuración, los hosts permitidos y los orígenes CORS deberán configurarse mediante variables de entorno. El sistema no deberá iniciar con el modo de depuración desactivado si no se definió una clave secreta.
+
+La autenticación deberá utilizar tokens JWT de corta duración (acceso: 30 minutos; renovación: 1 día).
+
+El inicio de sesión deberá limitar los intentos a 5 por minuto, para dificultar los ataques de fuerza bruta.
+
+Los archivos subidos para importación deberán validarse (formato .xlsx y tamaño máximo de 5 MB).
+
+Los respaldos de la base de datos no deberán incluirse en el repositorio.
+
+Limitaciones conocidas: el sistema opera sobre una red local mediante HTTP, por lo que el cifrado de las comunicaciones (HTTPS) queda como mejora futura; y no distingue roles de usuario.
 
 ---
 
@@ -520,6 +572,10 @@ Las pruebas deberán contemplar, entre otros aspectos:
 - rollback transaccional;
 - validaciones de negocio;
 - cálculo de precios;
+- normalización de colores y talles;
+- unicidad de proveedores;
+- visualización de movimientos de stock;
+- importación desde Excel;
 - autenticación.
 
 ---
@@ -578,7 +634,7 @@ El sistema deberá poder utilizarse desde distintos dispositivos (celular, compu
 
 El frontend deberá detectar automáticamente la dirección del backend a partir del equipo desde el que se abrió la aplicación, de modo que funcione tanto desde ese equipo como desde otro dispositivo de la red.
 
-La apertura del acceso desde otros dispositivos se realiza únicamente en el entorno de desarrollo. En un entorno de producción deberán restringirse los orígenes y los equipos permitidos.
+Durante el desarrollo, el backend acepta cualquier equipo de la red local. En el comercio, con el modo de depuración desactivado, solo se aceptan las direcciones indicadas en la configuración (`ALLOWED_HOSTS` y `CORS_ORIGINS`), por lo que el servidor debe tener una IP fija reservada en el router.
 
 ---
 
@@ -586,7 +642,7 @@ La apertura del acceso desde otros dispositivos se realiza únicamente en el ent
 
 La consulta pública del contenido de una caja deberá identificarse mediante un código no adivinable, de modo que no sea posible recorrer las cajas por numeración.
 
-La consulta pública deberá ser de solo lectura. Todas las demás operaciones del sistema deberán requerir autenticación.
+La consulta pública deberá ser de solo lectura. Las únicas consultas que no requieren sesión son el contenido de una caja (por su código) y el nombre y color de la tienda, necesarios para mostrar el login. Todas las demás operaciones del sistema deberán requerir autenticación.
 
 ---
 
