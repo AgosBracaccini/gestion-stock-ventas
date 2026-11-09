@@ -142,7 +142,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     response = await send(skipAuth ? null : getAccessToken());
   } catch (error) {
     if ((error as Error)?.name === "AbortError") throw error;
-    throw new ApiError(0, "No se pudo conectar con el servidor. Verificá que la API esté disponible.", null);
+    throw new ApiError(
+      0,
+      "No se pudo conectar con el servidor. Verificá que la computadora del local esté encendida y que estés conectado a la misma red WiFi.",
+      null,
+    );
   }
 
   if (response.status === 401 && !skipAuth) {
