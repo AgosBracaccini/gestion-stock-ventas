@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { ordenarVariantes } from "../lib/talles";
 
 interface ItemCola {
   key: string;
@@ -98,7 +99,7 @@ function CajaFormulario({ cajaInicial }: { cajaInicial?: Caja }) {
 
       setProducto(encontrado);
 
-      const primera = (encontrado.variantes ?? [])[0];
+      const primera = ordenarVariantes(encontrado.variantes ?? [])[0];
       if (primera) setVarianteId(String(primera.id));
     } catch (error) {
       setErrorBusqueda(error);
@@ -234,7 +235,7 @@ function CajaFormulario({ cajaInicial }: { cajaInicial?: Caja }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {(producto.variantes ?? []).map((v) => (
+                        {ordenarVariantes(producto.variantes ?? []).map((v) => (
                           <SelectItem key={v.id} value={String(v.id)}>
                             {v.color} · {v.talle} (stock: {v.stock_actual})
                           </SelectItem>
@@ -350,6 +351,20 @@ function CajaVistaDetalle({ id }: { id: number }) {
   }
 
   const urlPublica = `${window.location.origin}/cajas/publica/${caja.codigo_publico}`;
+  const esLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const unidades = caja.items.reduce((total, item) => total + item.cantidad, 0);
+
+  function imprimir() {
+    if (
+      esLocal &&
+      !window.confirm(
+        "Este QR apunta a «localhost» y NO va a funcionar desde el celular. Abrí el sistema con la dirección de la PC (por ejemplo http://192.168.0.10:5173) y volvé a imprimir. ¿Imprimir igual?",
+      )
+    ) {
+      return;
+    }
+    window.print();
+  }
 
   return (
     <>
@@ -362,7 +377,7 @@ function CajaVistaDetalle({ id }: { id: number }) {
               <Pencil className="size-4" />
               Editar
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
+            <Button variant="outline" onClick={imprimir}>
               <Printer className="size-4" />
               Imprimir
             </Button>
@@ -392,12 +407,21 @@ function CajaVistaDetalle({ id }: { id: number }) {
           <CardContent className="flex flex-col items-center gap-3">
             <CodigoQR valor={urlPublica} tamano={200} />
             <p className="text-center text-xs break-all text-muted-foreground">{urlPublica}</p>
+            {esLocal ? (
+              <p className="max-w-[260px] rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-xs font-medium text-destructive">
+                Este QR usa «localhost» y no funciona desde el celular. Abrí el sistema con la
+                dirección de la PC (la IP) antes de imprimir.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 
         <Card className="print:hidden">
           <CardHeader>
-            <CardTitle>Contenido ({caja.items.length})</CardTitle>
+            <CardTitle>
+              Contenido · {unidades} unidad{unidades === 1 ? "" : "es"} ({caja.items.length} producto
+              {caja.items.length === 1 ? "" : "s"})
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {caja.items.length === 0 ? (
@@ -425,11 +449,15 @@ function CajaVistaDetalle({ id }: { id: number }) {
       </div>
 
       {/* Hoja para pegar en la caja física */}
-      <div className="hoja-impresion hidden print:flex print:flex-col print:items-center print:justify-center print:gap-4 print:p-8">
-        <CodigoQR valor={urlPublica} tamano={280} />
-        <p className="text-lg font-semibold">
-          {caja.nombre ? `Caja #${caja.numero} — ${caja.nombre}` : `Caja #${caja.numero}`}
-        </p>
+      <div className="hoja-impresion hidden print:block">
+        <div className="flex h-[28cm] w-[21cm] flex-col items-center justify-center gap-8 text-center">
+          <CodigoQR valor={urlPublica} tamano={420} />
+          <div>
+            <p className="text-6xl font-bold">Caja #{caja.numero}</p>
+            {caja.nombre ? <p className="mt-2 text-3xl">{caja.nombre}</p> : null}
+          </div>
+          <p className="text-xl text-neutral-600">Escaneá el código para ver qué hay adentro</p>
+        </div>
       </div>
     </>
   );
