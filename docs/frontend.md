@@ -111,7 +111,7 @@ VITE_FINAN_YA_URL=https://clientes.finanya.com.ar:9634/index.php
 
 `VITE_API_URL` indica la dirección de la API desarrollada con Django.
 
-Esta variable es opcional. Si no se define, el frontend busca el backend en el mismo equipo desde el que se abrió la aplicación, en el puerto 8000. De esta forma la aplicación funciona igual al entrar por `localhost` que por la dirección IP del equipo en la red local, sin editar ninguna configuración. Esto permite abrirla desde un celular conectado a la misma red, por ejemplo al escanear el código QR de una caja.
+Esta variable es opcional. Si no se define, el frontend busca el backend en el mismo equipo desde el que se abrió la aplicación, en el puerto 8000. De esta forma la aplicación funciona igual al entrar por `localhost` que por la dirección IP del equipo en la red local, sin editar ninguna configuración. Esto permite abrirla desde un celular conectado a la misma red, por ejemplo al escanear el código QR de una caja. En la versión compilada que se usa en el local (`npm run build`), el frontend usa directamente la dirección desde la que fue entregado, ya que el mismo servidor (puerto 8000) ofrece la aplicación y la API.
 
 `VITE_FAST_CRED_URL` y `VITE_FINAN_YA_URL` permiten configurar las direcciones de las plataformas externas utilizadas durante el procesamiento de esos medios de pago.
 

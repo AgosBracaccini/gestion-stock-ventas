@@ -44,6 +44,9 @@ Comportamiento de seguridad ya incorporado:
 
 El código QR de cada caja contiene la dirección de la computadora servidor.
 Si el router le asigna otra IP, los QR ya impresos dejan de funcionar.
+La dirección también incluye el puerto: los QR deben generarse abriendo el
+sistema por `http://<IP>:8000` (modo del local), nunca por `localhost` ni por el
+puerto 5173 de desarrollo.
 
 1. En la computadora, ejecutar `ipconfig /all` y anotar la **dirección física**
    del adaptador WiFi y la **puerta de enlace** (dirección del router).
@@ -60,23 +63,64 @@ router distinto**. La computadora sigue obteniendo su IP de forma automática.
 
 ## 4. Puesta en marcha
 
-Backend (desde `backend`, con el entorno virtual activo):
+En el local el sistema se entrega desde **un único servidor** (puerto 8000):
+Django ofrece la API y la aplicación ya compilada, ejecutado con Waitress. No
+hace falta Vite ni Visual Studio Code.
+
+Primera vez, y cada vez que se actualiza el sistema:
+
+1. Instalar las dependencias del backend (entorno virtual activo, desde la raíz):
 
 ````
-python manage.py runserver 0.0.0.0:8000
+   pip install -r requirements.txt
 ````
 
-Frontend (desde `frontend`):
+2. Aplicar las migraciones (desde `backend`):
 
 ````
-npm run dev -- --host
+   python manage.py migrate
 ````
 
-`0.0.0.0` y `--host` permiten que otros dispositivos de la red accedan. Desde
-el celular se abre `http://<IP de la computadora>:5173`.
+3. Compilar el frontend (desde `frontend`). Genera la carpeta `frontend/dist`,
+   que no se sube al repositorio:
+
+````
+   npm install
+   npm run build
+````
+
+4. Verificar que el `.env` tenga `DEBUG=False` y la IP de la computadora en
+   `ALLOWED_HOSTS`.
+
+Arranque: doble clic en `iniciar-tienda.bat` (en la raíz del proyecto). Equivale
+a ejecutar, desde `backend` y con el entorno virtual activo:
+
+````
+waitress-serve --listen=0.0.0.0:8000 config.wsgi:application
+````
+
+La ventana debe quedar abierta mientras se usa el sistema. Desde cualquier
+dispositivo de la red se abre `http://<IP de la computadora>:8000`.
+
+El servidor lee la carpeta `frontend/dist` al iniciar: si se vuelve a compilar el
+frontend, hay que reiniciarlo.
+
+**Arranque automático.** Para que el sistema inicie al encender la computadora
+(con la sesión de Windows iniciada), se crea una tarea programada desde
+PowerShell, ajustando la ruta al proyecto:
+
+````
+schtasks /Create /TN "Sistema Tienda" /TR "\"C:\ruta\al\proyecto\iniciar-tienda.bat\"" /SC ONLOGON
+````
+
+Para desarrollar se siguen usando `runserver` y `npm run dev` (ver `README.md`).
 
 ## 5. Verificación
 
+- [ ] Con `DEBUG=False`, `http://<IP>:8000` muestra el login desde la computadora
+      y desde un celular.
+- [ ] Recargar una pantalla con F5 (por ejemplo, el Dashboard) no da error.
+- [ ] Tras reiniciar la computadora, el sistema vuelve a arrancar solo.
 - [ ] Se puede iniciar sesión desde la computadora y desde un celular.
 - [ ] Se registra una venta de prueba y descuenta el stock.
 - [ ] El QR de una caja se abre desde el celular.
@@ -93,9 +137,10 @@ el celular se abre `http://<IP de la computadora>:5173`.
 
 - La comunicación usa HTTP, sin cifrar. Para acceder desde fuera de la red del
   local habría que incorporar HTTPS.
-- Se usa el servidor de desarrollo de Django y de Vite. Para un uso más exigente
-  conviene un servidor de producción (por ejemplo, Waitress en Windows) y generar
-  el frontend compilado.
+- Se usa Waitress con el frontend compilado, sin HTTPS: es adecuado para un
+  comercio en red local, no para exponerlo a internet.
+- Si se modifica el frontend hay que volver a ejecutar `npm run build` y
+  reiniciar el servidor.
 - Las copias de seguridad de la base de datos no están automatizadas (ver sección 7).
 - Si cambia el router o se restablece de fábrica, hay que repetir la reserva de IP.
 - El sistema no distingue roles: todos los usuarios con sesión iniciada tienen los
