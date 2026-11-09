@@ -6,7 +6,7 @@ from .models import (
     VarianteProducto,
     MovimientoStock,
 )
-
+from .normalizacion import normalizar_color, normalizar_talle
 
 @transaction.atomic
 def ingresar_stock(variante_id, cantidad, observacion=""):
@@ -60,6 +60,9 @@ def ingresar_mercaderia(
         raise ValidationError(
             "La cantidad debe ser mayor a cero."
         )
+
+    color = normalizar_color(color)
+    talle = normalizar_talle(talle)
 
     producto, producto_creado = Producto.objects.get_or_create(
         codigo=codigo,
