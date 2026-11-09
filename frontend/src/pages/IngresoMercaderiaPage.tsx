@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, PackagePlus, RefreshCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { productosService } from "../api/services/productos.service";
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
+import { ordenarVariantes } from "../lib/talles";
 
 const empty = {
   codigo: "",
@@ -39,6 +40,7 @@ export function IngresoMercaderiaPage() {
   const [form, setForm] = useState({ ...empty });
   const [productoExistente, setProductoExistente] = useState<Producto | null>(null);
   const [verificando, setVerificando] = useState(false);
+  const codigoRef = useRef<HTMLInputElement>(null);
 
   const { data: proveedores } = useQuery({
     queryKey: ["proveedores"],
@@ -116,10 +118,13 @@ export function IngresoMercaderiaPage() {
     onSuccess: () => {
       toast.success(
         modo === "reposicion" ? "Reposición de stock registrada" : "Mercadería ingresada",
-        { description: "El backend registró el movimiento de ENTRADA." },
+        {
+          description: `${Number(form.cantidad)} u. de ${form.codigo.trim()} · ${form.color.trim()} · ${form.talle.trim()}`,
+        },
       );
       setForm({ ...empty });
       setProductoExistente(null);
+      codigoRef.current?.focus();
       void queryClient.invalidateQueries({ queryKey: ["stock-rows"] });
       void queryClient.invalidateQueries({ queryKey: ["movimientos"] });
     },
@@ -130,7 +135,8 @@ export function IngresoMercaderiaPage() {
     !!form.color.trim() &&
     !!form.talle.trim() &&
     !!form.proveedor &&
-    Number(form.cantidad) > 0;
+    Number(form.cantidad) > 0 &&
+    (!!productoExistente || Number(form.costo) > 0);
 
   const avisos = {
     "producto-nuevo": {
@@ -154,11 +160,21 @@ export function IngresoMercaderiaPage() {
     },
   }[modo];
 
+  const aviso = form.codigo.trim()
+    ? avisos
+    : {
+        titulo: "Ingresá un código",
+        texto:
+          "Escribí el código del producto: el sistema detecta solo si es nuevo o si solo hay que sumar stock.",
+        icon: PackagePlus,
+        className: "border-border bg-muted text-foreground",
+      };
+
   return (
     <>
       <PageHeader
         title="Ingreso de mercadería"
-        description="Alta de productos, alta de variantes y reposición de stock según lo que responda la API."
+        description="Cargá mercadería nueva o sumá stock a un producto que ya existe."
       />
 
       <form
@@ -177,6 +193,7 @@ export function IngresoMercaderiaPage() {
               <Label htmlFor="codigo">Código</Label>
               <Input
                 id="codigo"
+                ref={codigoRef}
                 value={form.codigo}
                 onChange={(e) => setField("codigo", e.target.value)}
                 placeholder="BL-100"
@@ -279,6 +296,7 @@ export function IngresoMercaderiaPage() {
                 value={form.costo}
                 onChange={(e) => setField("costo", e.target.value)}
                 disabled={!!productoExistente}
+                required={!productoExistente}
               />
             </div>
             <div className="space-y-2">
@@ -297,17 +315,37 @@ export function IngresoMercaderiaPage() {
         </Card>
 
         <div className="space-y-4">
-          <div className={`rounded-xl border px-4 py-4 ${avisos.className}`}>
+          <div className={`rounded-xl border px-4 py-4 ${aviso.className}`}>
             <div className="flex items-center gap-2">
-              <avisos.icon className="size-4" />
-              <p className="text-sm font-semibold">{avisos.titulo}</p>
+              <aviso.icon className="size-4" />
+              <p className="text-sm font-semibold">{aviso.titulo}</p>
             </div>
-            <p className="mt-2 text-sm">{avisos.texto}</p>
+            <p className="mt-2 text-sm">{aviso.texto}</p>
             {varianteExistente ? (
               <p className="mt-2 text-xs">
                 Stock actual de {varianteExistente.color} · {varianteExistente.talle}:{" "}
                 <strong>{varianteExistente.stock_actual}</strong> u.
               </p>
+            ) : null}
+            {productoExistente && (productoExistente.variantes ?? []).length > 0 ? (
+              <div className="mt-3">
+                <p className="text-xs font-medium">Variantes que ya tiene (tocá una para reponer):</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {ordenarVariantes(productoExistente.variantes ?? []).map((v) => (
+                    <button
+                      type="button"
+                      key={`${v.color}-${v.talle}`}
+                      onClick={() => {
+                        setField("color", v.color);
+                        setField("talle", v.talle);
+                      }}
+                      className="rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium hover:bg-accent"
+                    >
+                      {v.color} · {v.talle} ({v.stock_actual})
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : null}
           </div>
 
@@ -326,8 +364,8 @@ export function IngresoMercaderiaPage() {
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                El backend decide el alta de producto, el alta de variante o la reposición, y crea el
-                movimiento de stock correspondiente.
+                Si el código ya existe, solo se suma stock. Si no existe, se crea el producto con su
+                primera variante.
               </p>
             </CardContent>
           </Card>
