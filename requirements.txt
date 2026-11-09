@@ -17,6 +17,11 @@ dacite==1.9.2
 debugpy==1.8.14
 decorator==5.2.1
 Django==5.2.7
+django-cors-headers==4.9.0
+django-filter==26.1
+djangorestframework==3.18.0
+djangorestframework_simplejwt==5.5.1
+drf-spectacular==0.30.0
 et_xmlfile==2.0.0
 executing==2.2.0
 fontawesomefree==6.6.0
@@ -61,6 +66,7 @@ platformdirs==4.3.8
 prompt_toolkit==3.0.51
 protobuf==6.32.1
 psutil==7.0.0
+psycopg2-binary==2.9.12
 pure_eval==0.2.3
 puremagic==1.30
 pyarrow==21.0.0
