@@ -6,6 +6,7 @@ import { movimientosService } from "../api/services/movimientos.service";
 import type { TipoMovimiento } from "../api/types";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { PageHeader } from "../components/layout/PageHeader";
+import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -24,19 +25,44 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { formatDate } from "../lib/format";
+import { formatCount, formatDate } from "../lib/format";
 
 const TODOS = "__todos__";
+const POR_PAGINA = 25;
 
 const estilos: Record<TipoMovimiento, string> = {
-  ENTRADA: "border-success/30 bg-success/12 text-success-foreground",
-  VENTA: "border-primary/40 bg-primary/18 text-foreground",
-  AJUSTE: "border-warning/35 bg-warning/15 text-warning-foreground",
+  ENTRADA: "border-success/50 bg-success/30 text-success-foreground",
+  VENTA: "border-primary/50 bg-primary/25 text-foreground",
+  AJUSTE: "border-warning/70 bg-warning/45 text-warning-foreground",
 };
+
+const etiquetas: Record<TipoMovimiento, string> = {
+  ENTRADA: "Entrada",
+  VENTA: "Venta",
+  AJUSTE: "Ajuste",
+};
+
+// La cantidad se guarda siempre positiva: el signo depende del tipo.
+function CantidadMovimiento({
+  tipo,
+  cantidad,
+}: {
+  tipo: TipoMovimiento;
+  cantidad: number;
+}) {
+  if (tipo === "ENTRADA") {
+    return <span className="font-semibold text-success-foreground">+{cantidad}</span>;
+  }
+  if (tipo === "VENTA") {
+    return <span className="font-semibold text-destructive">−{cantidad}</span>;
+  }
+  return <span className="font-semibold">{cantidad}</span>;
+}
 
 export function MovimientosPage() {
   const [tipo, setTipo] = useState(TODOS);
   const [search, setSearch] = useState("");
+  const [pagina, setPagina] = useState(1);
 
   const { data: movimientos, isLoading, error } = useQuery({
     queryKey: ["movimientos"],
@@ -45,27 +71,39 @@ export function MovimientosPage() {
 
   const filtrados = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return (movimientos ?? []).filter((movimiento) => {
-      const okTipo = tipo === TODOS || movimiento.tipo_movimiento === tipo;
-      const texto = [
-        movimiento.codigo,
-        movimiento.producto_descripcion,
-        movimiento.color,
-        movimiento.talle,
-        movimiento.observacion,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return okTipo && (!term || texto.includes(term));
-    });
+    return [...(movimientos ?? [])]
+      .filter((movimiento) => {
+        const okTipo = tipo === TODOS || movimiento.tipo_movimiento === tipo;
+        const texto = [
+          movimiento.codigo,
+          movimiento.producto_descripcion,
+          movimiento.color,
+          movimiento.talle,
+          movimiento.observacion,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return okTipo && (!term || texto.includes(term));
+      })
+      .sort((a, b) => {
+        const diferencia = new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+        return diferencia !== 0 ? diferencia : b.id - a.id;
+      });
   }, [movimientos, tipo, search]);
+
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const visibles = filtrados.slice(
+    (paginaActual - 1) * POR_PAGINA,
+    paginaActual * POR_PAGINA,
+  );
 
   return (
     <>
       <PageHeader
         title="Movimientos de stock"
-        description="Entradas, ventas y ajustes registrados por el backend."
+        description="Entradas de mercadería, ventas y ajustes de stock."
       />
 
       <div className="surface-panel p-4">
@@ -78,13 +116,22 @@ export function MovimientosPage() {
                 className="pl-9"
                 placeholder="Producto, código, color, talle u observación"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPagina(1);
+                }}
               />
             </div>
           </div>
           <div>
             <Label className="mb-1.5 block text-xs text-muted-foreground">Tipo</Label>
-            <Select value={tipo} onValueChange={setTipo}>
+            <Select
+              value={tipo}
+              onValueChange={(value) => {
+                setTipo(value);
+                setPagina(1);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -102,7 +149,14 @@ export function MovimientosPage() {
           <ErrorMessage error={error} />
         </div>
 
-        <div className="mt-4 overflow-x-auto">
+        {!isLoading ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            <strong className="text-foreground">{formatCount(filtrados.length)}</strong>{" "}
+            movimientos
+          </p>
+        ) : null}
+
+        <div className="mt-3 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -122,7 +176,7 @@ export function MovimientosPage() {
                       </TableCell>
                     </TableRow>
                   ))
-                : filtrados.map((movimiento) => (
+                : visibles.map((movimiento) => (
                     <TableRow key={movimiento.id}>
                       <TableCell>{formatDate(movimiento.fecha)}</TableCell>
                       <TableCell>
@@ -138,15 +192,18 @@ export function MovimientosPage() {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                             estilos[movimiento.tipo_movimiento]
                           }`}
                         >
-                          {movimiento.tipo_movimiento}
+                          {etiquetas[movimiento.tipo_movimiento]}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {movimiento.cantidad > 0 ? `+${movimiento.cantidad}` : movimiento.cantidad}
+                      <TableCell className="text-right">
+                        <CantidadMovimiento
+                          tipo={movimiento.tipo_movimiento}
+                          cantidad={movimiento.cantidad}
+                        />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {movimiento.observacion || "—"}
@@ -163,6 +220,34 @@ export function MovimientosPage() {
             </TableBody>
           </Table>
         </div>
+
+        {filtrados.length > POR_PAGINA ? (
+          <div className="mt-4 flex items-center justify-between gap-2 text-sm">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={paginaActual <= 1}
+              onClick={() => setPagina(paginaActual - 1)}
+            >
+              Anterior
+            </Button>
+            <span className="text-muted-foreground">
+              Página {paginaActual} de {totalPaginas}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={paginaActual >= totalPaginas}
+              onClick={() => setPagina(paginaActual + 1)}
+            >
+              Siguiente
+            </Button>
+          </div>
+        ) : null}
+
+        <p className="mt-4 text-xs text-muted-foreground">
+          El stock cargado o corregido desde Excel y las ventas importadas no generan movimientos.
+        </p>
       </div>
     </>
   );

@@ -95,9 +95,31 @@ class VarianteProductoSerializer(serializers.ModelSerializer):
 
 
 class MovimientoStockSerializer(serializers.ModelSerializer):
+    producto_descripcion = serializers.SerializerMethodField()
+    codigo = serializers.CharField(
+        source="variante_producto.producto.codigo", read_only=True
+    )
+    color = serializers.CharField(source="variante_producto.color", read_only=True)
+    talle = serializers.CharField(source="variante_producto.talle", read_only=True)
+
     class Meta:
         model = MovimientoStock
-        fields = "__all__"
+        fields = [
+            "id",
+            "variante_producto",
+            "fecha",
+            "tipo_movimiento",
+            "cantidad",
+            "observacion",
+            "producto_descripcion",
+            "codigo",
+            "color",
+            "talle",
+        ]
+
+    def get_producto_descripcion(self, obj):
+        producto = obj.variante_producto.producto
+        return f"{producto.prenda} {producto.modelo}".strip()
     
 
 class IngresoStockSerializer(serializers.Serializer):
