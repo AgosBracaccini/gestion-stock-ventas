@@ -5,6 +5,7 @@ import {
   Boxes,
   PackagePlus,
   PackageX,
+  Receipt,
   ShoppingBag,
   TrendingUp,
 } from "lucide-react";
@@ -22,8 +23,8 @@ import { Skeleton } from "../components/ui/skeleton";
 const accesos = [
   { to: "/nueva-venta", label: "Nueva venta", icon: ShoppingBag },
   { to: "/ingreso-mercaderia", label: "Ingresar mercadería", icon: PackagePlus },
-  { to: "/productos", label: "Productos", icon: Boxes },
-  { to: "/productos", label: "Stock", icon: AlertTriangle },
+  { to: "/productos", label: "Productos / Stock", icon: Boxes },
+  { to: "/ventas", label: "Historial de ventas", icon: Receipt },
 ] as const;
 
 function StatCard({
@@ -42,8 +43,8 @@ function StatCard({
   return (
     <Card className="border-border/70 shadow-none">
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <span className="grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
+        <CardTitle className="text-xs font-medium text-muted-foreground sm:text-sm">{title}</CardTitle>
+        <span className="hidden size-9 place-items-center rounded-full bg-accent text-accent-foreground sm:grid">
           <Icon className="size-4" />
         </span>
       </CardHeader>
@@ -51,7 +52,7 @@ function StatCard({
         {loading ? (
           <Skeleton className="h-8 w-20" />
         ) : (
-          <p className="font-display text-3xl text-foreground">{value}</p>
+          <p className="font-display text-2xl text-foreground sm:text-3xl">{value}</p>
         )}
         <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       </CardContent>
@@ -77,7 +78,7 @@ export function DashboardPage() {
     <>
       <PageHeader title="Dashboard" description="Resumen de la operación diaria de la tienda." />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           title="Ventas de hoy"
           value={formatMoney(Number(resumen?.total_hoy ?? 0))}
