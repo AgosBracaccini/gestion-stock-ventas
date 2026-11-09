@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.http import HttpResponse, HttpResponseNotFound
+from django.urls import include, path, re_path
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -7,6 +9,18 @@ from drf_spectacular.views import (
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .auth_views import LoginView
+
+
+def frontend(request, ruta=""):
+    """Entrega la aplicación compilada (frontend/dist) para cualquier ruta que
+    no sea de la API. React se encarga de mostrar la pantalla que corresponda."""
+    index = settings.FRONTEND_DIST / "index.html"
+    if not index.is_file():
+        return HttpResponseNotFound(
+            "El frontend no está compilado. Ejecutar 'npm run build' en la carpeta frontend."
+        )
+    return HttpResponse(index.read_text(encoding="utf-8"), content_type="text/html")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -44,4 +58,7 @@ urlpatterns = [
         ),
         name="swagger-ui",
     ),
+
+    # Debe ir al final: cualquier otra dirección la resuelve el frontend.
+    re_path(r"^(?!api/|admin/|static/).*$", frontend),
 ]
