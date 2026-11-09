@@ -1,9 +1,13 @@
-// Si VITE_API_URL no está definida, el backend se busca en el mismo equipo desde
-// el que se abrió la app (puerto 8000). Así funciona igual entrando por
-// localhost que por la IP de la red, sin editar nada.
+// Si VITE_API_URL no está definida:
+// - En la versión compilada (producción), el backend es el mismo servidor que
+//   entregó la app, por lo que se usa su misma dirección.
+// - En desarrollo (npm run dev), se busca en el mismo equipo, puerto 8000.
+// Así funciona igual entrando por localhost que por la IP de la red.
 const rawBase =
   (import.meta.env["VITE_API_URL"] as string | undefined) ??
-  `${window.location.protocol}//${window.location.hostname}:8000`;
+  (import.meta.env.PROD
+    ? window.location.origin
+    : `${window.location.protocol}//${window.location.hostname}:8000`);
 
 export const API_URL = rawBase.replace(/\/+$/, "");
 
