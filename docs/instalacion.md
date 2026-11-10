@@ -105,13 +105,36 @@ dispositivo de la red se abre `http://<IP de la computadora>:8000`.
 El servidor lee la carpeta `frontend/dist` al iniciar: si se vuelve a compilar el
 frontend, hay que reiniciarlo.
 
-**Arranque automático.** Para que el sistema inicie al encender la computadora
-(con la sesión de Windows iniciada), se crea una tarea programada desde
+**Arranque automático.** Para que el sistema inicie solo cuando un usuario inicia
+sesión en Windows, y sin ventana visible, se crea una tarea programada desde
 PowerShell, ajustando la ruta al proyecto:
 
 ````
-schtasks /Create /TN "Sistema Tienda" /TR "\"C:\ruta\al\proyecto\iniciar-tienda.bat\"" /SC ONLOGON
+$accion = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath ''C:\ruta\al\proyecto\iniciar-tienda.bat'' -WindowStyle Hidden"'
+$disparador = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+Register-ScheduledTask -TaskName "Sistema Tienda" -Action $accion -Trigger $disparador
 ````
+
+Para iniciarlo sin reiniciar la computadora:
+
+````
+Start-ScheduledTask -TaskName "Sistema Tienda"
+````
+
+Para detenerlo (por ejemplo, antes de actualizar el sistema):
+
+````
+Stop-Process -Name waitress-serve -Force
+````
+
+Notas:
+
+- El sistema arranca cuando un usuario inicia sesión en Windows. Si nadie inicia
+  sesión, no arranca; conviene configurar el inicio de sesión automático.
+- Si al registrar la tarea aparece "Acceso denegado", abrir PowerShell como
+  administrador y repetir los tres comandos.
+- Como el arranque es sin ventana, los errores no se ven. Para diagnosticar,
+  ejecutar `iniciar-tienda.bat` con doble clic.
 
 Para desarrollar se siguen usando `runserver` y `npm run dev` (ver `README.md`).
 
