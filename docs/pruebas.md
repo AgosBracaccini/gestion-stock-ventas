@@ -28,81 +28,81 @@ La columna **Resultado** indica el estado de cada caso:
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-01 | Iniciar sesión con usuario y contraseña correctos | Ingresa al sistema y muestra el panel principal | Pendiente |
-| PF-02 | Iniciar sesión con contraseña incorrecta | Muestra un mensaje de error y no permite ingresar | Pendiente |
-| PF-03 | Registrar una venta en efectivo de un producto con stock | La venta se guarda y el stock de la variante disminuye en la cantidad vendida | Pendiente |
-| PF-04 | Intentar vender más unidades que el stock disponible | El sistema rechaza la venta e informa que el stock es insuficiente; el stock no cambia | Pendiente |
-| PF-05 | Registrar una venta por transferencia y luego marcarla como verificada | Queda pendiente de verificación y luego pasa a verificada, sin alterar importes ni stock | Pendiente |
+| PF-01 | Iniciar sesión con usuario y contraseña correctos | Ingresa al sistema y muestra el panel principal | OK |
+| PF-02 | Iniciar sesión con contraseña incorrecta | Muestra un mensaje de error y no permite ingresar | OK |
+| PF-03 | Registrar una venta en efectivo de un producto con stock | La venta se guarda y el stock de la variante disminuye en la cantidad vendida | OK |
+| PF-04 | Intentar vender más unidades que el stock disponible | El sistema rechaza la venta e informa que el stock es insuficiente; el stock no cambia | OK |
+| PF-05 | Registrar una venta por transferencia y luego marcarla como verificada | Queda pendiente de verificación y luego pasa a verificada, sin alterar importes ni stock | OK |
 
 ## Ingreso de mercadería y precios
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-06 | Ingresar mercadería con un código que no existe | Se crean el producto y la variante, y el stock queda cargado | Pendiente |
-| PF-07 | Ingresar mercadería de una variante ya existente | Se suma la cantidad al stock actual y se registra un movimiento ENTRADA | Pendiente |
-| PF-08 | Cambiar el multiplicador en la configuración de precios | Los precios de los productos se recalculan con el nuevo valor; las ventas anteriores conservan su precio | Pendiente |
+| PF-06 | Ingresar mercadería con un código que no existe | Se crean el producto y la variante, y el stock queda cargado | OK |
+| PF-07 | Ingresar mercadería de una variante ya existente | Se suma la cantidad al stock actual y se registra un movimiento ENTRADA | OK |
+| PF-08 | Cambiar el multiplicador en la configuración de precios | Los precios de los productos se recalculan con el nuevo valor; las ventas anteriores conservan su precio | OK |
 
 ## Personalización y etiquetas
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-09 | Cambiar nombre, color e intensidad de la tienda | La interfaz cambia de color y muestra el nuevo nombre | Pendiente |
-| PF-10 | Modificar y guardar el diseño de la etiqueta | La vista previa se actualiza y el diseño se conserva al volver a ingresar | Pendiente |
-| PF-11 | Agregar productos a la lista de etiquetas e imprimir (guardando como PDF) | Se genera una hoja con una etiqueta por unidad indicada, con nombre de la tienda, código y talle | Pendiente |
+| PF-09 | Cambiar nombre, color e intensidad de la tienda | La interfaz cambia de color y muestra el nuevo nombre | OK |
+| PF-10 | Modificar y guardar el diseño de la etiqueta | La vista previa se actualiza y el diseño se conserva al volver a ingresar | OK |
+| PF-11 | Agregar productos a la lista de etiquetas e imprimir (guardando como PDF) | Se genera una hoja con una etiqueta por unidad indicada, con nombre de la tienda, código y talle | OK |
 
 ## Cajas de depósito
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-12 | Crear una caja con dos productos | Se guarda la caja, se le asigna un número y se muestra su QR | Pendiente |
-| PF-13 | Editar una caja: cambiar una cantidad, quitar un producto y agregar otro | El contenido se actualiza y el código QR no cambia | Pendiente |
-| PF-14 | Intentar guardar una caja sin productos | El botón de guardar está deshabilitado | Pendiente |
-| PF-15 | Eliminar una caja | La caja desaparece del listado, previa confirmación | Pendiente |
+| PF-12 | Crear una caja con dos productos | Se guarda la caja, se le asigna un número y se muestra su QR | OK |
+| PF-13 | Editar una caja: cambiar una cantidad, quitar un producto y agregar otro | El contenido se actualiza y el código QR no cambia | OK |
+| PF-14 | Intentar guardar una caja sin productos | El botón de guardar está deshabilitado | OK |
+| PF-15 | Eliminar una caja | La caja desaparece del listado, previa confirmación | OK |
 
 ## QR y comunicación entre dispositivos
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-16 | Escanear el QR de una caja con el celular conectado a la misma WiFi | Se abre la pantalla pública con los artículos, talles y cantidades de la caja | Pendiente |
-| PF-17 | Abrir esa pantalla sin haber iniciado sesión | Se muestra el contenido sin pedir usuario ni contraseña | Pendiente |
-| PF-18 | Abrir una dirección de caja con un código que no existe | Muestra un mensaje de error indicando que no se encontró la caja | Pendiente |
-| PF-19 | Escanear el QR con un celular conectado a otra red (datos móviles) | No se puede acceder (limitación conocida de la red local) | Pendiente |
-| PF-20 | Editar el contenido de una caja y volver a escanear su QR | El celular muestra el contenido actualizado | Pendiente |
+| PF-16 | Escanear el QR de una caja con el celular conectado a la misma WiFi | Se abre la pantalla pública con los artículos, talles y cantidades de la caja | OK |
+| PF-17 | Abrir esa pantalla sin haber iniciado sesión | Se muestra el contenido sin pedir usuario ni contraseña | OK |
+| PF-18 | Abrir una dirección de caja con un código que no existe | Muestra un mensaje de error indicando que no se encontró la caja | OK |
+| PF-19 | Escanear el QR con un celular conectado a otra red (datos móviles) | No se puede acceder (limitación conocida de la red local) | OK |
+| PF-20 | Editar el contenido de una caja y volver a escanear su QR | El celular muestra el contenido actualizado | OK |
 
 ## Importación desde Excel
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-21 | Importar el archivo de precios y proveedores | Se crean o actualizan los productos y proveedores; se informa la cantidad de filas procesadas | Pendiente |
-| PF-22 | Importar el archivo de stock después del de precios | Se crean las variantes y el stock queda cargado | Pendiente |
-| PF-23 | Importar un archivo con una fila con datos faltantes | La fila se informa con su motivo, las demás se importan, y la fila con error puede corregirse a mano | Pendiente |
-| PF-24 | Importar stock con un código que no existe, completando prenda, costo y proveedor | Se crea el producto nuevo junto con su variante | Pendiente |
-| PF-25 | Importar el stock: intentar ejecutar la importación | El sistema advierte que el stock actual se reemplaza y pide confirmación antes de ejecutar | Pendiente |
-| PF-26 | Importar el historial de ventas desde Excel | Se crean las ventas con su fecha y precio originales, sin modificar el stock ni generar movimientos | Pendiente |
-| PF-27 | Importar dos veces el mismo archivo de ventas | La segunda vez las ventas se omiten por duplicadas y no se crean registros repetidos | Pendiente |
-| PF-28 | Importar una venta por transferencia sin nombre, apellido o teléfono | La fila se informa con su motivo y las demás se importan | Pendiente |
-| PF-29 | Subir un archivo que no sea .xlsx o que supere los 5 MB | El sistema rechaza el archivo con un mensaje claro | Pendiente |
+| PF-21 | Importar el archivo de precios y proveedores | Se crean o actualizan los productos y proveedores; se informa la cantidad de filas procesadas | OK |
+| PF-22 | Importar el archivo de stock después del de precios | Se crean las variantes y el stock queda cargado | OK |
+| PF-23 | Importar un archivo con una fila con datos faltantes | La fila se informa con su motivo, las demás se importan, y la fila con error puede corregirse a mano | OK |
+| PF-24 | Importar stock con un código que no existe, completando prenda, costo y proveedor | Se crea el producto nuevo junto con su variante | OK |
+| PF-25 | Importar el stock: intentar ejecutar la importación | El sistema advierte que el stock actual se reemplaza y pide confirmación antes de ejecutar | OK |
+| PF-26 | Importar el historial de ventas desde Excel | Se crean las ventas con su fecha y precio originales, sin modificar el stock ni generar movimientos | OK |
+| PF-27 | Importar dos veces el mismo archivo de ventas | La segunda vez las ventas se omiten por duplicadas y no se crean registros repetidos | OK |
+| PF-28 | Importar una venta por transferencia sin nombre, apellido o teléfono | La fila se informa con su motivo y las demás se importan | OK |
+| PF-29 | Subir un archivo que no sea .xlsx o que supere los 5 MB | El sistema rechaza el archivo con un mensaje claro | OK |
 
 ## Datos y validaciones
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-30 | Ingresar mercadería con el color "NEGRO" y luego con "negro" para el mismo producto y talle | Se usa una única variante, con el color "Negro" y el stock sumado | Pendiente |
-| PF-31 | Ingresar un talle en minúscula (por ejemplo "m") | Se guarda como "M" | Pendiente |
-| PF-32 | Crear un proveedor con un nombre que ya existe, cambiando mayúsculas o espacios | El sistema rechaza el duplicado con un mensaje claro | Pendiente |
-| PF-33 | Abrir Movimientos de stock | Cada movimiento muestra la prenda, el código, el color y el talle (no "Variante n") | Pendiente |
-| PF-34 | Cambiar el multiplicador en Configuración de precios | Se muestra la simulación del efecto y se pide confirmación antes de guardar | Pendiente |
-| PF-35 | Cambiar precios y abrir una venta anterior | La venta anterior conserva el precio al que se realizó | Pendiente |
+| PF-30 | Ingresar mercadería con el color "NEGRO" y luego con "negro" para el mismo producto y talle | Se usa una única variante, con el color "Negro" y el stock sumado | OK |
+| PF-31 | Ingresar un talle en minúscula (por ejemplo "m") | Se guarda como "M" | OK |
+| PF-32 | Crear un proveedor con un nombre que ya existe, cambiando mayúsculas o espacios | El sistema rechaza el duplicado con un mensaje claro | OK |
+| PF-33 | Abrir Movimientos de stock | Cada movimiento muestra la prenda, el código, el color y el talle (no "Variante n") | OK |
+| PF-34 | Cambiar el multiplicador en Configuración de precios | Se muestra la simulación del efecto y se pide confirmación antes de guardar | OK |
+| PF-35 | Cambiar precios y abrir una venta anterior | La venta anterior conserva el precio al que se realizó | OK |
 
 ## Seguridad
 
 | N° | Caso de prueba | Resultado esperado | Resultado |
 | --- | --- | --- | --- |
-| PF-36 | Ingresar 6 veces seguidas una contraseña incorrecta en menos de un minuto | A partir del sexto intento el sistema bloquea temporalmente el acceso | Pendiente |
-| PF-37 | Abrir una pantalla protegida sin haber iniciado sesión | Redirige al login | Pendiente |
-| PF-38 | Abrir el QR de una caja desde el celular, sin sesión iniciada | Muestra el contenido de la caja en modo solo lectura | Pendiente |
-| PF-39 | Abrir una URL de caja con un código inventado | El sistema informa que la caja no existe, sin revelar datos | Pendiente |
-| PF-40 | Imprimir el QR de una caja desde una dirección localhost | El sistema advierte que el QR no funcionará desde un celular y pide confirmar | Pendiente |
+| PF-36 | Ingresar 6 veces seguidas una contraseña incorrecta en menos de un minuto | A partir del sexto intento el sistema bloquea temporalmente el acceso | OK |
+| PF-37 | Abrir una pantalla protegida sin haber iniciado sesión | Redirige al login | OK |
+| PF-38 | Abrir el QR de una caja desde el celular, sin sesión iniciada | Muestra el contenido de la caja en modo solo lectura | OK |
+| PF-39 | Abrir una URL de caja con un código inventado | El sistema informa que la caja no existe, sin revelar datos | OK |
+| PF-40 | Imprimir el QR de una caja desde una dirección localhost | El sistema advierte que el QR no funcionará desde un celular y pide confirmar | OK |
 
 ## Pruebas automatizadas
 
@@ -119,7 +119,7 @@ python manage.py test
 
 ## Observaciones
 
-Los resultados de las pruebas, las fallas encontradas y su corrección se registran en esta sección.
+Los 40 casos manuales se ejecutaron el 09/11/2026 sobre el sistema en funcionamiento (versión compilada), partiendo de una base de datos vacía a la que se importaron los archivos Excel de prueba. Los 40 dieron OK. Las fallas encontradas y su corrección se registran en esta sección.
 
 Fallas detectadas durante la revisión del sistema (octubre y noviembre de 2026) y su corrección:
 
